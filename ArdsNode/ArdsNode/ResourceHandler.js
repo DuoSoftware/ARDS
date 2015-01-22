@@ -26,6 +26,33 @@ var SetConcurrencyInfo = function (data) {
     return (e);
 };
 
+var RemoveConcurrencyInfo = function (data, callback) {
+    if (typeof String.prototype.startsWith != 'function') {
+        // see below for better implementation!
+        String.prototype.startsWith = function (str) {
+            return this.indexOf(str) == 0;
+        };
+    }
+
+    for (var i in data) {
+        redisHandler.GetObj(data[i], function (err, obj) {
+            var slotInfoTags = [];
+            if (data[i].startsWith(ConcurrencyInfo)) {
+                slotInfoTags = ["company_" + obj.Company, "tenant_" + obj.Tenant, "class_" + obj.Class, "type_" + obj.Type, "category_" + obj.Category, "resourceid_" + obj.ResourceId, "objtype_ConcurrencyInfo"];
+            }
+            else {
+                slotInfoTags = ["company_" + obj.Company, "tenant_" + obj.Tenant, "class_" + obj.Class, "type_" + obj.Type, "category_" + obj.Category, "state_" + obj.State, "resourceid_" + obj.ResourceId, "objtype_CSlotInfo"];
+            }
+
+            redisHandler.RemoveObj_V_T(data[i], slotInfoTags, function (err, result) {
+                if (err) {
+                    console.log(err);
+                }
+            });
+        });
+    }
+};
+
 var AddResource = function (basicData, callback) {
     var concurrencyInfo = [];
     var sci = SetConcurrencyInfo(basicData.ConcurrencyInfo);
@@ -33,11 +60,33 @@ var AddResource = function (basicData, callback) {
     sci.on('concurrencyInfo', function (obj) {
         var concurrencySlotInfo = [];
         for (var i = 0; i < obj.NoOfSlots; i++) {
-            var slotInfo = { Class: obj.Class, Type: obj.Type, Category: obj.Category, State: "Available", HandlingRequest: "" };
-            concurrencySlotInfo.push(slotInfo);
+            var slotInfo = { Company: basicData.Company, Tenant: basicData.Tenant, Class: obj.Class, Type: obj.Type, Category: obj.Category, State: "Available", HandlingRequest: "", ResourceId: basicData.ResourceId };
+            var slotInfokey = util.format('CSlotInfo:%d:%d:%s:%s:%s:%s:%d', slotInfo.Company, slotInfo.Tenant, basicData.ResourceId, slotInfo.Class, slotInfo.Type, slotInfo.Category, i);
+            var slotInfoTags = ["company_"+ slotInfo.Company, "tenant_"+ slotInfo.Tenant, "class_" + slotInfo.Class, "type_" + slotInfo.Type, "category_" + slotInfo.Category, "state_" + slotInfo.State, "resourceid_" + basicData.ResourceId, "objtype_CSlotInfo"];
+            
+            var jsonSlotObj = JSON.stringify(slotInfo);
+            redisHandler.AddObj_V_T(slotInfokey, jsonSlotObj, slotInfoTags, function (err, reply, vid) {
+                if (err) {
+                    console.log(err);
+                }
+                else {
+                    concurrencyInfo.push(slotInfokey);
+                }
+            });
         }
-        var concurrencyObj = { Class: obj.Class, Type: obj.Type, Category: obj.Category, ConcurrencySlotInfo: concurrencySlotInfo, LastConnectedTime: "" };
-        concurrencyInfo.push(concurrencyObj);
+        var concurrencyObj = { Company: basicData.Company, Tenant: basicData.Tenant, Class: obj.Class, Type: obj.Type, Category: obj.Category, LastConnectedTime: "", ResourceId: basicData.ResourceId };
+        var cObjkey = util.format('ConcurrencyInfo:%d:%d:%s:%s:%s:%s', concurrencyObj.Company, concurrencyObj.Tenant, basicData.ResourceId, concurrencyObj.Class, concurrencyObj.Type, concurrencyObj.Category);
+        var cObjTags = ["company_" + concurrencyObj.Company, "tenant_" + concurrencyObj.Tenant, "class_" + concurrencyObj.Class, "type_" + concurrencyObj.Type, "category_" + concurrencyObj.Category, "resourceid_" + basicData.ResourceId, "objtype_ConcurrencyInfo"];
+        
+        var jsonConObj = JSON.stringify(concurrencyObj);
+        redisHandler.AddObj_V_T(cObjkey, jsonConObj, cObjTags, function (err, reply, vid) {
+            if (err) {
+                console.log(err);
+            }
+            else {
+                concurrencyInfo.push(cObjkey);
+            }
+        });
     });
     
     sci.on('endconcurrencyInfo', function () {
@@ -63,6 +112,8 @@ var RemoveResource = function (company, tenant, resourceId, callback) {
             callback(err, "false");
         }
         else {
+            RemoveConcurrencyInfo(obj.ConcurrencyInfo, function () {
+            });
             var resourceObj = JSON.parse(obj);
             var tag = ["company_" + resourceObj.Company, "tenant_" + resourceObj.Tenant, "class_" + resourceObj.Class, "type_" + resourceObj.Type, "category_" + resourceObj.Category, "objtype_Resource", "resourceid_" + resourceObj.ResourceId];
             for (var i in resourceObj.ResourceAttributeInfo) {
@@ -82,32 +133,25 @@ var RemoveResource = function (company, tenant, resourceId, callback) {
 };
 
 var SetResource = function (basicObj, cVid, callback) {
-    var concurrencyInfo = [];
-    var sci = SetConcurrencyInfo(basicData.ConcurrencyInfo);
+    var key = util.format('Resource:%d:%d:%s', resourceObj.Company, resourceObj.Tenant, resourceObj.ResourceId);
     
-    sci.on('concurrencyInfo', function (obj) {
-        var concurrencySlotInfo = [];
-        for (var i = 0; i < obj.NoOfSlots; i++) {
-            var slotInfo = { Class: obj.Class, Type: obj.Type, Category: obj.Category, State: "Available", HandlingRequest: "" };
-            concurrencySlotInfo.push(slotInfo);
+    redisHandler.GetObj(key, function (err, obj) {
+        if (err) {
+            console.log(err);
         }
-        var concurrencyObj = { Class: obj.Class, Type: obj.Type, Category: obj.Category, ConcurrencySlotInfo: concurrencySlotInfo, LastConnectedTime: "" };
-        concurrencyInfo.push(concurrencyObj);
-    });
-    
-    sci.on('endconcurrencyInfo', function () {
-        var resourceObj = { Company: basicData.Company, Tenant: basicData.Tenant, Class: basicData.Class, Type: basicData.Type, Category: basicData.Category, ResourceId: basicData.ResourceId, ResourceAttributeInfo: basicData.ResourceAttributeInfo, ConcurrencyInfo: concurrencyInfo, State: "Available" };
-        
-        var key = util.format('Resource:%d:%d:%s', resourceObj.Company, resourceObj.Tenant, resourceObj.ResourceId);
-        var tag = ["company_" + resourceObj.Company, "tenant_" + resourceObj.Tenant, "class_" + resourceObj.Class, "type_" + resourceObj.Type, "category_" + resourceObj.Category, "objtype_Resource", "resourceid_" + resourceObj.ResourceId];
-        for (var i in resourceObj.ResourceAttributeInfo) {
-            tag.push("attribute_" + resourceObj.ResourceAttributeInfo[i].Attribute);
+        else {
+            var resourceObj = { Company: basicData.Company, Tenant: basicData.Tenant, Class: basicData.Class, Type: basicData.Type, Category: basicData.Category, ResourceId: basicData.ResourceId, ResourceAttributeInfo: basicData.ResourceAttributeInfo, ConcurrencyInfo: obj.ConcurrencyInfo, State: obj.State };
+            
+            var tag = ["company_" + resourceObj.Company, "tenant_" + resourceObj.Tenant, "class_" + resourceObj.Class, "type_" + resourceObj.Type, "category_" + resourceObj.Category, "objtype_Resource", "resourceid_" + resourceObj.ResourceId];
+            for (var i in resourceObj.ResourceAttributeInfo) {
+                tag.push("attribute_" + resourceObj.ResourceAttributeInfo[i].Attribute);
+            }
+            var jsonObj = JSON.stringify(resourceObj);
+            
+            redisHandler.SetObj_V_T(key, jsonObj, tag, cVid, function (err, reply, vid) {
+                callback(err, reply, vid);
+            });
         }
-        var jsonObj = JSON.stringify(resourceObj);
-        
-        redisHandler.SetObj_V_T(key, jsonObj, tag, cVid, function (err, reply, vid) {
-            callback(err, reply, vid);
-        });
     });
 };
 
@@ -121,6 +165,55 @@ var GetResource = function (company, tenant, resourceId, callback) {
 var SearchResourcebyTags = function (tags, callback) {
     if (Array.isArray(tags)) {
         tags.push("objtype_Resource");
+        redisHandler.SearchObj_V_T(tags, function (err, result) {
+            callback(err, result);
+        });
+    }
+    else {
+        var e = new Error();
+        e.message = "tags must be a string array";
+        callback(e, null);
+    }
+};
+
+var UpdateLastConnectedTime = function (company, tenant, cinfoclass, type, category, resourceid, callback) {
+    var cObjkey = util.format('ConcurrencyInfo:%d:%d:%s:%s:%s:%s', company, tenant, resourceid, cinfoclass, type, category);
+    var date = new Date();
+
+    redisHandler.GetObj_V(cObjkey, function (err, obj, vid) {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            var cObj = JSON.parse(obj);
+            cObj.LastConnectedTime = date.toString();
+            var jCObj = JSON.stringify(cObj);
+            var cObjTags = ["company_" + cObj.Company, "tenant_" + cObj.Tenant, "class_" + cObj.Class, "type_" + cObj.Type, "category_" + cObj.Category, "resourceid_" + cObj.ResourceId, "objtype_ConcurrencyInfo"];
+        
+            redisHandler.SetObj_V_T(cObjkey, jCObj, cObjTags, vid, function () {
+                callback(err, result, vid);
+            });
+        }
+    });
+};
+
+var SearchCSlotByTags = function (tags, callback) {
+    if (Array.isArray(tags)) {
+        tags.push("objtype_CSlotInfo");
+        redisHandler.SearchObj_V_T(tags, function (err, result) {
+            callback(err, result);
+        });
+    }
+    else {
+        var e = new Error();
+        e.message = "tags must be a string array";
+        callback(e, null);
+    }
+};
+
+var SearchConcurrencyInfoByTags = function (tags, callback) {
+    if (Array.isArray(tags)) {
+        tags.push("objtype_ConcurrencyInfo");
         redisHandler.SearchObj_V_T(tags, function (err, result) {
             callback(err, result);
         });
