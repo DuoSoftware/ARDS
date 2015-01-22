@@ -12,7 +12,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>c62cf231-5e11-46b9-b4d4-dc0a44b33fa3</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>PreProcessor.js</StartupFile>
+    <StartupFile>RequestServerNode.js</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
