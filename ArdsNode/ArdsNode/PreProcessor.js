@@ -13,7 +13,7 @@ server.use(restify.queryParser());
 server.use(restify.bodyParser());
 
 server.post('/preprocessor/execute', function (req, res, next) {
-    process(req.body, function (err, result) {
+    execute(req.body, function (err, result) {
         if (err != null) {
             res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
             res.end(err);
@@ -27,7 +27,7 @@ server.post('/preprocessor/execute', function (req, res, next) {
     return next();
 });
 
-var process = function (data, callback) {
+var execute = function (data, callback) {
     var srs = SetRequestServer(data);
     var key = util.format('ReqMETA:%d:%d:%s:%s:%s', data.Company, data.Tenant, data.Class, data.Type, data.Category);
     var date = new Date();
@@ -46,13 +46,15 @@ var process = function (data, callback) {
                 var attributeInfo = [];
                 for (var i in data.Attributes) {
                     var val = data.Attributes[i];
-                    var getAttributeInfo = metaObj.AttributeMeta.filter(val, function (attribute) {
-                        return (attribute.AttributeCode == val);
-                    });
-                    attributeInfo.push(getAttributeInfo);
+                    for (var j in metaObj.AttributeMeta) {
+                        var val1 = metaObj.AttributeMeta[j].AttributeCode;
+                        if (val == val1) {
+                            attributeInfo.push(metaObj.AttributeMeta[j]);
+                        }
+                    }
                 }
                 
-                var requestObj = { Company: data.Company, Tenant: data.Tenant, Class: data.Class, Type: data.Type, Category: Data.Category, SessionId: data.SessionId, AttributeInfo: attributeInfo, RequestServerId: data.RequestServerId, Priority: data.Priority, ArriveTime: date.toDateString, OtherInfo: data.OtherInfo, ServingAlgo: metaObj.ServingAlgo, HandlingAlgo: metaObj.HandlingAlgo, SelectionAlgo: metaObj.SelectionAlgo, RequestServerUrl: url };
+                var requestObj = { Company: data.Company, Tenant: data.Tenant, Class: data.Class, Type: data.Type, Category: data.Category, SessionId: data.SessionId, AttributeInfo: attributeInfo, RequestServerId: data.RequestServerId, Priority: data.Priority, ArriveTime: date.toDateString, OtherInfo: data.OtherInfo, ServingAlgo: metaObj.ServingAlgo, HandlingAlgo: metaObj.HandlingAlgo, SelectionAlgo: metaObj.SelectionAlgo, RequestServerUrl: url };
                 callback(null, requestObj);
             }
         });
@@ -70,7 +72,7 @@ var SetRequestServer = function (data) {
                     e.emit('server', "");
                 }
                 else {
-                    var randServer = myArray[Math.floor(Math.random() * result.length)];
+                    var randServer = result[Math.floor(Math.random() * result.length)];
                     e.emit('server', randServer.CallbackUrl);
                 }
             });

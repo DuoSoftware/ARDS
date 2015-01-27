@@ -5,7 +5,7 @@ var AddMeataData = function (metaDataObj, callback) {
     var key = util.format('ReqMETA:%d:%d:%s:%s:%s', metaDataObj.Company, metaDataObj.Tenant, metaDataObj.Class, metaDataObj.Type, metaDataObj.Category);
     var tag = ["company_" + metaDataObj.Company, "tenant_" + metaDataObj.Tenant, "class_" + metaDataObj.Class, "type_" + metaDataObj.Type, "category_" + metaDataObj.Category, "objtype_ReqMETA"];
     
-    var obj = JSON.stringify(reqServerObj);
+    var obj = JSON.stringify(metaDataObj);
     
     redisHandler.AddObj_T(key, obj, tag, function (err, result) {
         callback(err, result);
