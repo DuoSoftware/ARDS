@@ -26,3 +26,12 @@ func (selectionAlgo SelectionAlgo) BasicSelection(Company, Tenant int, SessionId
 	return result
 
 }
+
+func AppendIfMissing(dataList []string, i string) []string {
+	for _, ele := range dataList {
+		if ele == i {
+			return dataList
+		}
+	}
+	return append(dataList, i)
+}

@@ -13,7 +13,7 @@ type Configuration struct {
 }
 
 type AttributeData struct {
-	AttributeCode     string
+	AttributeCode     []string
 	AttributeClass    string
 	AttributeType     string
 	AttributeCategory string
