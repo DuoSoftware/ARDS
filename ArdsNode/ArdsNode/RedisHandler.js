@@ -8,6 +8,61 @@ client.on("error", function (err) {
     console.log("Error " + err);
 });
 
+var SetTags = function (tagKey, objKey, callback) {
+    var tagMeta = util.format('tagMeta:%s', objKey);
+    client.get(tagMeta, function (err, result) {
+        if (err) {
+            console.log(err);
+            callback(err, null);
+        } else {
+            if (result == null) {
+                client.set(tagKey, objKey, function (err, reply) {
+                    if (err) {
+                        console.log(err);
+                    }
+                    else {
+                        client.set(tagMeta, tagKey, function (err, reply) {
+                            if (err) {
+                                client.del(tagKey, function (err, reply) {
+                                });
+                            }
+                            callback(err, reply);
+                        });
+                    }
+                });
+            }
+            else {
+                client.del(result, function (err, reply) {
+                    if (err) {
+                        console.log(error);
+                        callback(err, null)
+                    }
+                    else if (reply === 1) {
+                        client.set(tagKey, objKey, function (err, reply) {
+                            if (err) {
+                                console.log(err);
+                            }
+                            else {
+                                client.set(tagMeta, tagKey, function (err, reply) {
+                                    if (err) {
+                                        client.del(tagKey, function (err, reply) {
+                                        });
+                                    }
+                                    callback(err, reply);
+                                });
+                            }
+                        });
+                    }
+                    else {
+                        console.log("del failed" + result);
+                        callback(null, "Failed");
+                    }
+                });
+            }            
+        }
+    });
+};
+
 var SetObj = function (key, obj, callback) {
     client.set(key, obj, function (error, reply) {
         if (error) {
@@ -49,7 +104,8 @@ var AddObj_T = function (key, obj, tags, callback) {
     var vid = 1;
     if (Array.isArray(tags)) {
         var tagkey = util.format('tag:%s', tags.join(":"));
-        client.set(tagkey, key, function (err, reply) {
+
+        SetTags(tagkey, key, function (err, reply) {
             if (err)
                 console.log(error);
             else if (reply === "OK") {
@@ -75,7 +131,7 @@ var AddObj_T = function (key, obj, tags, callback) {
 var SetObj_T = function (key, obj, tags, callback) {
     if (Array.isArray(tags)) {
         var tagkey = util.format('tag:%s', tags.join(":"));
-        client.set(tagkey, key, function (err, reply) {
+        SetTags(tagkey, key, function (err, reply) {
             if (err)
                 console.log(error);
             else if (reply === "OK") {
@@ -93,8 +149,16 @@ var SetObj_T = function (key, obj, tags, callback) {
 
 var RemoveObj_T = function (key, tags, callback) {
     if (Array.isArray(tags)) {
-        var tagkey = util.format('tag:%s', tags.join(":"));
-        client.del(tagkey, function (err, reply) { });
+        var tagMeta = util.format('tagMeta:%s', key);
+        client.get(tagMeta, function (err, result) {
+            if (err) {
+                console.log(err);
+            } else {
+                client.del(result, function (err, reply) { });
+                client.del(tagMeta, function (err, reply) { });
+            }
+        });
+        
     }
     
     client.del(key, function (err, reply) {
@@ -255,7 +319,7 @@ var AddObj_V_T = function (key, obj, tags, callback) {
     var vid = 1;
     if (Array.isArray(tags)) {
         var tagkey = util.format('tag:%s', tags.join(":"));
-        client.set(tagkey, key, function (err, reply) {
+        SetTags(tagkey, key, function (err, reply) {
             if (err)
                 console.log(error);
             else if (reply === "OK") {
@@ -298,7 +362,7 @@ var SetObj_V_T = function (key, obj, tags, cvid, callback) {
         else if (reply === cvid) {
             if (Array.isArray(tags)) {
                 var tagkey = util.format('tag:%s', tags.join(":"));
-                client.set(tagkey, key, function (err, reply) {
+                SetTags(tagkey, key, function (err, reply) {
                     if (err)
                         console.log(error);
                     else if (reply === "OK") {
@@ -329,8 +393,15 @@ var SetObj_V_T = function (key, obj, tags, cvid, callback) {
 
 var RemoveObj_V_T = function (key, tags, callback) {
     if (Array.isArray(tags)) {
-        var tagkey = util.format('tag:%s', tags.join(":"));
-        client.del(tagkey, function (err, reply) { });
+        var tagMeta = util.format('tagMeta:%s', key);
+        client.get(tagMeta, function (err, result) {
+            if (err) {
+                console.log(err);
+            } else {
+                client.del(result, function (err, reply) { });
+                client.del(tagMeta, function (err, reply) { });
+            }
+        });
     }
     
     var versionkey = util.format('version:%s', key);

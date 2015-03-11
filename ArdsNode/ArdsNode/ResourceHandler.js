@@ -47,6 +47,13 @@ var RemoveConcurrencyInfo = function (data, callback) {
     }
 };
 
+var RemoveResourceState = function (company, tenant, resourceid, callback) {
+    var StateKey = util.format('ResourceState:%d:%d:%s', company, tenant, resourceid);
+    redisHandler.RemoveObj(StateKey, function (err, result) {
+        callback(err, result);
+    });
+}
+
 var AddResource = function (basicData, callback) {
     var concurrencyInfo = [];
     var sci = SetConcurrencyInfo(basicData.ConcurrencyInfo);
@@ -108,6 +115,8 @@ var RemoveResource = function (company, tenant, resourceId, callback) {
             
             var resourceObj = JSON.parse(obj);
             RemoveConcurrencyInfo(resourceObj.ConcurrencyInfo, function () {
+            });
+            RemoveResourceState(resourceObj.Company, resourceObj.Tenant, resourceObj.ResourceId, function () {
             });
             var tag = ["company_" + resourceObj.Company, "tenant_" + resourceObj.Tenant, "class_" + resourceObj.Class, "type_" + resourceObj.Type, "category_" + resourceObj.Category, "objtype_Resource", "resourceid_" + resourceObj.ResourceId];
             for (var i in resourceObj.ResourceAttributeInfo) {
@@ -202,6 +211,7 @@ var UpdateSlotStateAvailable = function (company, tenant, slotclass, type, categ
         else {
             var tempObj = JSON.parse(obj);
             tempObj.State = "Available";
+            tempObj.HandlingRequest = "";
             var slotInfoTags = ["company_" + tempObj.Company, "tenant_" + tempObj.Tenant, "class_" + tempObj.Class, "type_" + tempObj.Type, "category_" + tempObj.Category, "state_" + tempObj.State, "resourceid_" + tempObj.ResourceId, "objtype_CSlotInfo", "slotid_" + tempObj.SlotId];
             var jsonObj = JSON.stringify(tempObj);
             redisHandler.SetObj_V_T(slotInfokey, jsonObj, slotInfoTags, vid, function (err, reply, vid) {
@@ -211,7 +221,7 @@ var UpdateSlotStateAvailable = function (company, tenant, slotclass, type, categ
     });
 };
 
-var UpdateSlotStateReserved = function (company, tenant, slotclass, type, category, resourceid, slotid, callback) {
+var UpdateSlotStateReserved = function (company, tenant, slotclass, type, category, resourceid, slotid, sessionid, callback) {
     var slotInfokey = util.format('CSlotInfo:%s:%s:%s:%s:%s:%s:%s', company, tenant, resourceid, slotclass, type, category, slotid);
     redisHandler.GetObj_V(slotInfokey, function (err, obj, vid) {
         if (err) {
@@ -221,7 +231,8 @@ var UpdateSlotStateReserved = function (company, tenant, slotclass, type, catego
         else {
             var tempObj = JSON.parse(obj);
             tempObj.State = "Reserved";
-            var slotInfoTags = ["company_" + tempObj.Company, "tenant_" + tempObj.Tenant, "class_" + tempObj.Class, "type_" + tempObj.Type, "category_" + tempObj.Category, "state_" + tempObj.State, "resourceid_" + tempObj.ResourceId, "objtype_CSlotInfo", "slotid_" + tempObj.SlotId];
+            tempObj.HandlingRequest = sessionid;
+            var slotInfoTags = ["company_" + tempObj.Company, "tenant_" + tempObj.Tenant, "class_" + tempObj.Class, "type_" + tempObj.Type, "category_" + tempObj.Category, "state_" + tempObj.State, "resourceid_" + tempObj.ResourceId, "objtype_CSlotInfo", "slotid_" + tempObj.SlotId, "handlingrequest_" + tempObj.HandlingRequest];
             var jsonObj = JSON.stringify(tempObj);
             redisHandler.SetObj_V_T(slotInfokey, jsonObj, slotInfoTags, vid, function (err, reply, vid) {
                 callback(err, reply);
@@ -230,7 +241,7 @@ var UpdateSlotStateReserved = function (company, tenant, slotclass, type, catego
     });
 };
 
-var UpdateSlotStateConnected = function (company, tenant, slotclass, type, category, resourceid, slotid, callback) {
+var UpdateSlotStateConnected = function (company, tenant, slotclass, type, category, resourceid, slotid, sessionid, callback) {
     var slotInfokey = util.format('CSlotInfo:%s:%s:%s:%s:%s:%s:%s', company, tenant, resourceid, slotclass, type, category, slotid);
     redisHandler.GetObj_V(slotInfokey, function (err, obj, vid) {
         if (err) {
@@ -240,7 +251,8 @@ var UpdateSlotStateConnected = function (company, tenant, slotclass, type, categ
         else {
             var tempObj = JSON.parse(obj);
             tempObj.State = "Connected";
-            var slotInfoTags = ["company_" + tempObj.Company, "tenant_" + tempObj.Tenant, "class_" + tempObj.Class, "type_" + tempObj.Type, "category_" + tempObj.Category, "state_" + tempObj.State, "resourceid_" + tempObj.ResourceId, "objtype_CSlotInfo", "slotid_" + tempObj.SlotId];
+            tempObj.HandlingRequest = sessionid;
+            var slotInfoTags = ["company_" + tempObj.Company, "tenant_" + tempObj.Tenant, "class_" + tempObj.Class, "type_" + tempObj.Type, "category_" + tempObj.Category, "state_" + tempObj.State, "resourceid_" + tempObj.ResourceId, "objtype_CSlotInfo", "slotid_" + tempObj.SlotId, "handlingrequest_" + tempObj.HandlingRequest];
             var jsonObj = JSON.stringify(tempObj);
             redisHandler.SetObj_V_T(slotInfokey, jsonObj, slotInfoTags, vid, function (err, reply, vid) {
                 callback(err, reply);

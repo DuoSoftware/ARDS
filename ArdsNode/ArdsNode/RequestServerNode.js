@@ -266,6 +266,51 @@ server.del('/resource/remove/:company/:tenant/:resourceid', function (req, res, 
     return next();
 });
 
+server.post('/resource/cs/update', function (req, res, next) {
+    switch (req.body.State) {
+        case "Available":
+            resourceHandler.UpdateSlotStateAvailable(req.body.Company, req.body.Tenant, req.body.Class, req.body.Type, req.body.Category, req.body.ResourceId, req.body.SlotId, function (err, result) {
+                if (err != null) {
+                    res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+                    res.end(err);
+                }
+                else {
+                    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                    res.end(result);
+                }
+            });
+            break;
+
+        case "Reserved":
+            resourceHandler.UpdateSlotStateReserved(req.body.Company, req.body.Tenant, req.body.Class, req.body.Type, req.body.Category, req.body.ResourceId, req.body.SlotId, req.body.SessionId, function (err, result) {
+                if (err != null) {
+                    res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+                    res.end(err);
+                }
+                else {
+                    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                    res.end(result);
+                }
+            });
+            break;
+        
+        case "Connected":
+            resourceHandler.UpdateSlotStateConnected(req.body.Company, req.body.Tenant, req.body.Class, req.body.Type, req.body.Category, req.body.ResourceId, req.body.SlotId, req.body.SessionId, function (err, result) {
+                if (err != null) {
+                    res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+                    res.end(err);
+                }
+                else {
+                    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                    res.end(result);
+                }
+            });
+            break;
+    }
+    
+    return next();
+});
+
 
 server.post('/request/add', function (req, res, next) {
     requestHandler.AddRequest(req.body, function (err, result, vid) {

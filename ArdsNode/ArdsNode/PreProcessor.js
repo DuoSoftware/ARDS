@@ -46,12 +46,14 @@ var execute = function (data, callback) {
                 var attributeInfo = [];
                 for (var i in data.Attributes) {
                     var val = data.Attributes[i];
-                    for (var j in metaObj.AttributeMeta) {
-                        var val1 = metaObj.AttributeMeta[j].AttributeCode;
-                        if (val == val1) {
-                            attributeInfo.push(metaObj.AttributeMeta[j]);
-                        }
-                    }
+
+                    attributeInfo = AppendAttributeInfo(attributeInfo, metaObj.AttributeMeta, val);
+                    //for (var j in metaObj.AttributeMeta) {
+                    //    var val1 = metaObj.AttributeMeta[j].AttributeCode;
+                    //    if (val1.indexOf(val) == 1) {
+                    //        attributeInfo.push(metaObj.AttributeMeta[j]);
+                    //    }
+                    //}
                 }
                 
                 var requestObj = { Company: data.Company, Tenant: data.Tenant, Class: data.Class, Type: data.Type, Category: data.Category, SessionId: data.SessionId, AttributeInfo: attributeInfo, RequestServerId: data.RequestServerId, Priority: data.Priority, ArriveTime: date.toDateString, OtherInfo: data.OtherInfo, ServingAlgo: metaObj.ServingAlgo, HandlingAlgo: metaObj.HandlingAlgo, SelectionAlgo: metaObj.SelectionAlgo, RequestServerUrl: url };
@@ -60,6 +62,43 @@ var execute = function (data, callback) {
         });
     
     });
+};
+
+var AppendAttributeInfo = function (attInfo, attMetaData, att) {
+    for (var i in attInfo) {
+        var info = attInfo[i];
+        for (var j in attMetaData) {
+            var attMeta = attMetaData[j];
+            if (attMeta.AttributeCode.indexOf(att) >= 0) {
+                if (info.AttributeClass == attMeta.AttributeClass && info.AttributeType == attMeta.AttributeType && info.AttributeCategory == attMeta.AttributeCategory) {
+                    info.AttributeCode.push(att);
+                    return attInfo;
+                }
+                else {
+                    var tempObj = { AttributeClass: attMeta.AttributeClass, AttributeType: attMeta.AttributeType, AttributeCategory: attMeta.AttributeCategory, AttributeCode: [att], WeightPrecentage: attMeta.WeightPrecentage };
+                    attInfo.push(tempObj);
+                    return attInfo;
+                }
+            }
+            else {
+                return attInfo;
+            }
+        }
+    }
+
+    for (var j in attMetaData) {
+        var attMeta = attMetaData[j];
+        if (attMeta.AttributeCode.indexOf(att) >= 0) {
+            var tempObj = { AttributeClass: attMeta.AttributeClass, AttributeType: attMeta.AttributeType, AttributeCategory: attMeta.AttributeCategory, AttributeCode: [att], WeightPrecentage: attMeta.WeightPrecentage };
+            attInfo.push(tempObj);
+            return attInfo;
+        }
+        else {
+            return attInfo;
+        }
+    }
+
+
 };
 
 var SetRequestServer = function (data) {

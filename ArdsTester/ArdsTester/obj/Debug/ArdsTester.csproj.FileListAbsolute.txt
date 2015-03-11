@@ -1,0 +1,7 @@
+D:\Duo Projects\Version 5.1\Node.jsProjects\ARDS\ArdsTester\ArdsTester\bin\Debug\ArdsTester.exe.config
+D:\Duo Projects\Version 5.1\Node.jsProjects\ARDS\ArdsTester\ArdsTester\bin\Debug\ArdsTester.exe
+D:\Duo Projects\Version 5.1\Node.jsProjects\ARDS\ArdsTester\ArdsTester\bin\Debug\ArdsTester.pdb
+D:\Duo Projects\Version 5.1\Node.jsProjects\ARDS\ArdsTester\ArdsTester\obj\Debug\ArdsTester.csprojResolveAssemblyReference.cache
+D:\Duo Projects\Version 5.1\Node.jsProjects\ARDS\ArdsTester\ArdsTester\obj\Debug\ArdsTester.exe
+D:\Duo Projects\Version 5.1\Node.jsProjects\ARDS\ArdsTester\ArdsTester\obj\Debug\ArdsTester.pdb
+D:\Duo Projects\Version 5.1\Node.jsProjects\ARDS\ArdsTester\ArdsTester\bin\Debug\Newtonsoft.Json.dll
