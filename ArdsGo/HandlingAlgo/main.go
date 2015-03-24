@@ -33,17 +33,29 @@ type Resource struct {
 }
 
 type CSlotInfo struct {
-	Company         int
-	Tenant          int
-	Class           string
-	Type            string
-	Category        string
-	State           string
-	HandlingRequest string
-	ResourceId      string
-	SlotId          int
-	ObjKey          string
-	SessionId       string
+	Company          int
+	Tenant           int
+	Class            string
+	Type             string
+	Category         string
+	State            string
+	HandlingRequest  string
+	ResourceId       string
+	SlotId           int
+	ObjKey           string
+	SessionId        string
+	LastReservedTime string
+	OtherInfo        string
+}
+
+type ReqMetaData struct {
+	MaxReservedTime int
+	MaxRejectCount  int
+}
+
+type ConcurrencyInfo struct {
+	RejectCount       int
+	LastConnectedTime string
 }
 
 func main() {

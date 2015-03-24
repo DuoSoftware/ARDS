@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fzzy/radix/redis"
+	"sort"
 	"strings"
 )
 
@@ -34,11 +35,19 @@ func BasicSelection(_company, _tenent int, _sessionId string, ch chan []string) 
 		tagArray[3] = fmt.Sprintf("type_%s", reqObj.Type)
 		tagArray[4] = fmt.Sprintf("category_%s", reqObj.Category)
 		tagArray[5] = fmt.Sprintf("objtype_%s", "Resource")
+
+		attInfo := make([]string, 0)
+
 		for _, value := range reqObj.AttributeInfo {
 			for _, att := range value.AttributeCode {
-				fmt.Println("attCode", att)
-				tagArray = AppendIfMissing(tagArray, fmt.Sprintf("attribute_%s", att))
+				attInfo = AppendIfMissing(attInfo, att)
 			}
+		}
+
+		sort.Sort(ByStringValue(attInfo))
+		for _, att := range attInfo {
+			fmt.Println("attCode", att)
+			tagArray = AppendIfMissing(tagArray, fmt.Sprintf("attribute_%s", att))
 		}
 
 		tags := fmt.Sprintf("tag:*%s*", strings.Join(tagArray, "*"))

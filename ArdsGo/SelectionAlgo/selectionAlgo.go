@@ -35,3 +35,9 @@ func AppendIfMissing(dataList []string, i string) []string {
 	}
 	return append(dataList, i)
 }
+
+type ByStringValue []string
+
+func (a ByStringValue) Len() int           { return len(a) }
+func (a ByStringValue) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByStringValue) Less(i, j int) bool { return a[i] < a[j] }

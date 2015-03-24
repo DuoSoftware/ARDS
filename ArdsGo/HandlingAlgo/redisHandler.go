@@ -9,8 +9,6 @@ import (
 var redisIp string
 var redisDb int
 
-const layout = "Jan 2, 2006 at 3:04pm (MST)"
-
 func errHndlr(err error) {
 	if err != nil {
 		fmt.Println("error:", err)

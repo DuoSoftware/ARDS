@@ -9,7 +9,7 @@ import (
 var redisIp string
 var redisDb int
 
-const layout = "Jan 2, 2006 at 3:04pm (MST)"
+const layout = "2006-01-02T15:04:05Z07:00"
 
 func errHndlr(err error) {
 	if err != nil {
