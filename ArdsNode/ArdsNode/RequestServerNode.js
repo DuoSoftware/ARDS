@@ -269,7 +269,7 @@ server.del('/resource/remove/:company/:tenant/:resourceid', function (req, res, 
 server.post('/resource/cs/update', function (req, res, next) {
     switch (req.body.State) {
         case "Available":
-            resourceHandler.UpdateSlotStateAvailable(req.body.Company, req.body.Tenant, req.body.Class, req.body.Type, req.body.Category, req.body.ResourceId, req.body.SlotId, function (err, result) {
+            resourceHandler.UpdateSlotStateAvailable(req.body.Company, req.body.Tenant, req.body.Class, req.body.Type, req.body.Category, req.body.ResourceId, req.body.SlotId, req.body.OtherInfo, function (err, result) {
                 if (err != null) {
                     res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
                     res.end(err);

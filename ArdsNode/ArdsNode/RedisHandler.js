@@ -253,7 +253,7 @@ var SetObj_V = function (key, obj, cvid, callback) {
         if (err)
             console.log(err);
         else if (reply === null) {
-            AddObjWithTag(key, obj, tags, callback);
+            AddObj_V(key, obj, callback);
         }
         else if (reply === cvid) {
             var versionkey = util.format('version:%s', key);

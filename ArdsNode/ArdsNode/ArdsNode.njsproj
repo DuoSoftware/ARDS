@@ -42,6 +42,7 @@
     <Compile Include="RequestServerNode.js" />
     <Compile Include="ResourceHandler.js" />
     <Compile Include="ResourceStateMapper.js" />
+    <Compile Include="SortArray.js" />
     <Compile Include="Test.js" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\Node.js Tools\Microsoft.NodejsTools.targets" />
