@@ -1,6 +1,7 @@
 ﻿var util = require('util');
 var redisHandler = require('./RedisHandler.js');
 var sortArray = require('./SortArray.js');
+var reqQueueHandler = require('./ReqQueueHandler.js');
 
 var AddRequest = function (requestObj, callback) {
     var key = util.format('Request:%d:%d:%s', requestObj.Company, requestObj.Tenant, requestObj.SessionId);
@@ -21,39 +22,30 @@ var AddRequest = function (requestObj, callback) {
     var jsonObj = JSON.stringify(requestObj);
     
     redisHandler.AddObj_V_T(key, jsonObj, tag, function (err, reply, vid) {
+        if (err) {
+            console.log(err);
+        }
+        else if (reply === "OK") {
+            if (requestObj.ReqHandlingAlgo === "QUEUE") {
+                reqQueueHandler.AddRequestToQueue(requestObj, function (err, result) {
+                    if (err) {
+                        console.log(err);
+                    }
+                });
+            }
+        }
         callback(err, reply, vid);
     });
 };
 
 var SetRequest = function (requestObj, cVid, callback) {
     var key = util.format('Request:%d:%d:%s', requestObj.Company, requestObj.Tenant, requestObj.SessionId);
-    var tag = ["company_" + requestObj.Company, "tenant_" + requestObj.Tenant, "class_" + requestObj.Class, "type_" + requestObj.Type, "category_" + requestObj.Category, "objtype_Request", "sessionid_" + requestObj.SessionId, "reqserverid_" + requestObj.RequestServerId, "priority_" + requestObj.Priority, "servingalgo_" + requestObj.ServingAlgo, "handlingalgo" + requestObj.HandlingAlgo, "selectionalgo" + requestObj.SelectionAlgo];
-    var tempAttributeList = [];
-    for (var i in requestObj.AttributeInfo) {
-        var atts = requestObj.AttributeInfo[i].AttributeCode;
-        for (var j in atts) {
-            tempAttributeList.push(atts[j]);
-        }
-    }
-    var sortedAttributes = sortArray.sortData(tempAttributeList);
-    for (var k in sortedAttributes) {
-        tag.push("attribute_" + sortedAttributes[k]);
-    }
-    var jsonObj = JSON.stringify(requestObj);
-    
-    redisHandler.SetObj_V_T(key, jsonObj, tag, cVid, function (err, reply, vid) {
-        callback(err, reply, vid);
-    });
-};
-
-var RemoveRequest = function (company, tenant, sessionId, callback) {
-    var key = util.format('Request:%s:%s:%s', company, tenant, sessionId);
-    redisHandler.GetObj(key, function (err, obj) {
+    redisHandler.CheckObjExists(key, function (err, result) {
         if (err) {
-            callback(err, "false");
+            console.log(err);
+            callback(err, null, 0);
         }
-        else {
-            var requestObj = JSON.parse(obj);
+        else if (result == "1") {
             var tag = ["company_" + requestObj.Company, "tenant_" + requestObj.Tenant, "class_" + requestObj.Class, "type_" + requestObj.Type, "category_" + requestObj.Category, "objtype_Request", "sessionid_" + requestObj.SessionId, "reqserverid_" + requestObj.RequestServerId, "priority_" + requestObj.Priority, "servingalgo_" + requestObj.ServingAlgo, "handlingalgo" + requestObj.HandlingAlgo, "selectionalgo" + requestObj.SelectionAlgo];
             var tempAttributeList = [];
             for (var i in requestObj.AttributeInfo) {
@@ -66,7 +58,46 @@ var RemoveRequest = function (company, tenant, sessionId, callback) {
             for (var k in sortedAttributes) {
                 tag.push("attribute_" + sortedAttributes[k]);
             }
+            var jsonObj = JSON.stringify(requestObj);
             
+            redisHandler.SetObj_V_T(key, jsonObj, tag, cVid, function (err, reply, vid) {
+                callback(err, reply, vid);
+            });
+        }
+        else {            
+            callback(null, "Set Failed- No Existing Obj", 0);
+        }
+    });
+};
+
+var RemoveRequest = function (company, tenant, sessionId, callback) {
+    var key = util.format('Request:%s:%s:%s', company, tenant, sessionId);
+    redisHandler.GetObj(key, function (err, obj) {
+        if (err) {
+            callback(err, "false");
+        }
+        else {
+            var requestObj = JSON.parse(obj);
+            var tag = ["company_" + requestObj.Company, "tenant_" + requestObj.Tenant, "class_" + requestObj.Class, "type_" + requestObj.Type, "category_" + requestObj.Category, "objtype_Request", "sessionid_" + requestObj.SessionId, "reqserverid_" + requestObj.RequestServerId, "priority_" + requestObj.Priority, "servingalgo_" + requestObj.ServingAlgo, "handlingalgo_" + requestObj.HandlingAlgo, "selectionalgo_" + requestObj.SelectionAlgo];
+            var tempAttributeList = [];
+            for (var i in requestObj.AttributeInfo) {
+                var atts = requestObj.AttributeInfo[i].AttributeCode;
+                for (var j in atts) {
+                    tempAttributeList.push(atts[j]);
+                }
+            }
+            var sortedAttributes = sortArray.sortData(tempAttributeList);
+            for (var k in sortedAttributes) {
+                tag.push("attribute_" + sortedAttributes[k]);
+            }
+            
+            if (requestObj.ReqHandlingAlgo === "QUEUE") {
+                reqQueueHandler.RemoveRequestFromQueue(requestObj, function (err, result) {
+                    if (err) {
+                        console.log(err);
+                    }
+                });
+            }
             redisHandler.RemoveObj_V_T(key, tag, function (err, result) {
                 if (err) {
                     callback(err, "false");

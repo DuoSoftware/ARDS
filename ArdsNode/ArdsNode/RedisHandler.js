@@ -468,6 +468,118 @@ var SearchObj_V_T = function (tags, callback) {
 };
 
 
+var CheckObjExists = function (key, callback) {
+    client.exists(key, function (error, reply) {
+        if (error) {
+            callback(error, null);
+        }
+        else {
+            callback(null, reply);
+        }
+    });
+};
+
+
+var AddItemToListR = function (key, obj, callback) {
+    client.rpush(key, obj, function (error, reply) {
+        if (error) {
+            callback(error, null);
+        }
+        else {
+            callback(null, reply);
+        }
+    });
+};
+
+var AddItemToListL = function (key, obj, callback) {
+    client.lpush(key, obj, function (error, reply) {
+        if (error) {
+            callback(error, null);
+        }
+        else {
+            callback(null, reply);
+        }
+    });
+};
+
+var GetItemFromList = function (key, callback) {
+    client.lpop(key, function (err, result) {
+        if (err) {
+            console.log(err);
+            callback(err, null);
+        } else {
+            callback(null, result);
+        }
+    });
+};
+
+var RemoveItemFromList = function (key, obj, callback) {
+    client.lrem(key, 0, obj, function (err, result) {
+        if (err) {
+            console.log(err);
+            callback(err, null);
+        } else {
+            callback(null, result);
+        }
+    });
+};
+
+
+var AddItemToHash = function (hashKey, field, obj, callback) {
+    client.hset(hashKey, field, obj, function (err, result) {
+        if (err) {
+            console.log(err);
+            callback(err, null);
+        } else {
+            callback(null, result);
+        }
+    });
+};
+
+var RemoveItemFromHash = function (hashKey, field, callback) {
+    client.hdel(hashKey, field, function (err, result) {
+        if (err) {
+            console.log(err);
+            callback(err, null);
+        } else {
+            callback(null, result);
+        }
+    });
+};
+
+var CheckHashFieldExists = function (hashkey, field, callback) {
+    client.hexists(hashkey, field, function (err, result) {
+        if (err) {
+            console.log(err);
+            callback(err, null);
+        } else {
+            callback(null, result);
+        }
+    });
+};
+
+var GetHashValue = function(hashkey, field, callback) {
+    client.hexists(hashKey, field, function (err, result) {
+        if (err) {
+            console.log(err);
+            callback(err, null);
+        } else {
+            callback(null, result);
+        }
+    });
+};
+
+var GetAllHashValue = function (hashkey, callback) {
+    client.hvals(hashKey, function (err, result) {
+        if (err) {
+            console.log(err);
+            callback(err, null);
+        } else {
+            callback(null, result);
+        }
+    });
+};
+
 module.exports.SetObj = SetObj;
 module.exports.RemoveObj = RemoveObj;
 module.exports.GetObj = GetObj;
@@ -486,3 +598,16 @@ module.exports.AddObj_V_T = AddObj_V_T;
 module.exports.SetObj_V_T = SetObj_V_T;
 module.exports.RemoveObj_V_T = RemoveObj_V_T;
 module.exports.SearchObj_V_T = SearchObj_V_T;
+
+module.exports.CheckObjExists = CheckObjExists;
+
+module.exports.AddItemToListR = AddItemToListR;
+module.exports.AddItemToListL = AddItemToListL;
+module.exports.GetItemFromList = GetItemFromList;
+module.exports.RemoveItemFromList = RemoveItemFromList;
+
+module.exports.AddItemToHash = AddItemToHash;
+module.exports.RemoveItemFromHash = RemoveItemFromHash;
+module.exports.CheckHashFieldExists = CheckHashFieldExists;
+module.exports.GetHashValue = GetHashValue;
+module.exports.GetAllHashValue = GetAllHashValue;

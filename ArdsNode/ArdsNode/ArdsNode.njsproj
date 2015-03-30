@@ -37,6 +37,7 @@
     <Compile Include="PreProcessor.js" />
     <Compile Include="RedisHandler.js" />
     <Compile Include="ReqMetaDataHandler.js" />
+    <Compile Include="ReqQueueHandler.js" />
     <Compile Include="ReqServerHandler.js" />
     <Compile Include="RequestHandler.js" />
     <Compile Include="RequestServerNode.js" />

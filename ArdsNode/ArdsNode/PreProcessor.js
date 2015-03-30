@@ -3,6 +3,7 @@ var redisHandler = require('./RedisHandler.js');
 var reqServerHandler = require('./ReqServerHandler.js');
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
+var sort = require('./SortArray.js');
 
 var server = restify.createServer({
     name: 'ArdsPreProcessor',
@@ -44,8 +45,9 @@ var execute = function (data, callback) {
                 var metaObj = JSON.parse(result);
                 
                 var attributeInfo = [];
-                for (var i in data.Attributes) {
-                    var val = data.Attributes[i];
+                var sortedAttributes = sort.sortData(data.Attributes);
+                for (var i in sortedAttributes) {
+                    var val = sortedAttributes[i];
 
                     attributeInfo = AppendAttributeInfo(attributeInfo, metaObj.AttributeMeta, val);
                     //for (var j in metaObj.AttributeMeta) {
@@ -56,7 +58,10 @@ var execute = function (data, callback) {
                     //}
                 }
                 
-                var requestObj = { Company: data.Company, Tenant: data.Tenant, Class: data.Class, Type: data.Type, Category: data.Category, SessionId: data.SessionId, AttributeInfo: attributeInfo, RequestServerId: data.RequestServerId, Priority: data.Priority, ArriveTime: date.toDateString, OtherInfo: data.OtherInfo, ServingAlgo: metaObj.ServingAlgo, HandlingAlgo: metaObj.HandlingAlgo, SelectionAlgo: metaObj.SelectionAlgo, RequestServerUrl: url };
+                var attributeDataString = util.format('attribute_%s', sortedAttributes.join(":attribute_"));
+                var queueId = util.format('Queue:%d:%d:%s:%s:%s:%s:%s', data.Company, data.Tenant, data.Class, data.Type, data.Category, attributeDataString, data.Priority.toUpperCase());
+                var date = new Date();
+                var requestObj = { Company: data.Company, Tenant: data.Tenant, Class: data.Class, Type: data.Type, Category: data.Category, SessionId: data.SessionId, AttributeInfo: attributeInfo, RequestServerId: data.RequestServerId, Priority: data.Priority.toUpperCase(), ArriveTime: date.toISOString(), OtherInfo: data.OtherInfo, ServingAlgo: metaObj.ServingAlgo, HandlingAlgo: metaObj.HandlingAlgo, SelectionAlgo: metaObj.SelectionAlgo, RequestServerUrl: url, QueueId: queueId, ReqHandlingAlgo: metaObj.ReqHandlingAlgo, ReqSelectionAlgo: metaObj.ReqSelectionAlgo};
                 callback(null, requestObj);
             }
         });
