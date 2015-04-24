@@ -547,6 +547,17 @@ var RemoveItemFromHash = function (hashKey, field, callback) {
     });
 };
 
+var RemoveHash = function (hashKey, callback) {
+    client.del(hashKey, function (err, result) {
+        if (err) {
+            console.log(err);
+            callback(err, null);
+        } else {
+            callback(null, result);
+        }
+    });
+};
+
 var CheckHashFieldExists = function (hashkey, field, callback) {
     client.hexists(hashkey, field, function (err, result) {
         if (err) {
@@ -611,3 +622,4 @@ module.exports.RemoveItemFromHash = RemoveItemFromHash;
 module.exports.CheckHashFieldExists = CheckHashFieldExists;
 module.exports.GetHashValue = GetHashValue;
 module.exports.GetAllHashValue = GetAllHashValue;
+module.exports.RemoveHash = RemoveHash;

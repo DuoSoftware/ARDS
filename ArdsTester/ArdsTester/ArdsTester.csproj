@@ -47,9 +47,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArdsTester.cs" />
+    <Compile Include="ReqQueue.cs" />
+    <Compile Include="StartArds.cs" />
+    <Compile Include="Continue.cs" />
     <Compile Include="Handling.cs" />
-    <Compile Include="IArdsTester.cs" />
+    <Compile Include="IStartArds.cs" />
+    <Compile Include="IContinueArds.cs" />
     <Compile Include="Prepocessor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

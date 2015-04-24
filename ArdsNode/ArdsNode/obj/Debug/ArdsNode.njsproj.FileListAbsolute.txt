@@ -1,0 +1,2 @@
+D:\Duo Projects\Version 5.1\Node.jsProjects\ARDS\ArdsNode\ArdsNode\obj\Debug\ArdsNode.njsprojResolveAssemblyReference.cache
+D:\Duo Projects\Version 5.1\Node.jsProjects\ARDS\ArdsNode\ArdsNode\bin\Microsoft.NodejsTools.WebRole.dll

@@ -30,6 +30,11 @@ type Request struct {
 	AttributeInfo []AttributeData
 }
 
+type ConcurrencyInfo struct {
+	ResourceId        string
+	LastConnectedTime string
+}
+
 func main() {
 	fmt.Println("Initializting Main")
 	InitiateRedis()

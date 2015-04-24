@@ -2,7 +2,7 @@
 var redisHandler = require('./RedisHandler.js');
 
 var AddRequestServer = function (reqServerObj, callback) {
-    var key = util.format('ReqServer:%d:%d:%d', reqServerObj.Company, reqServerObj.Tenant, reqServerObj.ServerID);
+    var key = util.format('ReqServer:%d:%d:%s', reqServerObj.Company, reqServerObj.Tenant, reqServerObj.ServerID);
     var tag = ["company_" + reqServerObj.Company, "tenant_" + reqServerObj.Tenant, "class_" + reqServerObj.Class, "type_" + reqServerObj.Type, "category_" + reqServerObj.Category, "objtype_ReqServer", "serverid_" + reqServerObj.ServerID];
     
     var obj = JSON.stringify(reqServerObj);

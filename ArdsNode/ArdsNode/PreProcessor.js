@@ -127,7 +127,8 @@ var SetRequestServer = function (data) {
                     e.emit('server', "");
                 }
                 else {
-                    e.emit('server', reqServerResult.CallbackUrl);
+                    var cUrl = JSON.parse(reqServerResult).CallbackUrl;
+                    e.emit('server', cUrl);
                 }
             });
         }

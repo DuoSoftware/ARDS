@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-func SingleHandling(sessionId string, resourceIds []string, ch chan string) {
-	ch <- SelectHandlingResource(sessionId, resourceIds)
+func SingleHandling(ReqClass, ReqType, ReqCategory, sessionId string, resourceIds []string, ch chan string) {
+	ch <- SelectHandlingResource(ReqClass, ReqType, ReqCategory, sessionId, resourceIds)
 }
 
-func SelectHandlingResource(sessionId string, resourceIds []string) string {
+func SelectHandlingResource(ReqClass, ReqType, ReqCategory, sessionId string, resourceIds []string) string {
 	client, err := redis.Dial("tcp", redisIp)
 	errHndlr(err)
 	defer client.Close()
@@ -28,20 +28,20 @@ func SelectHandlingResource(sessionId string, resourceIds []string) string {
 		var resObj Resource
 		json.Unmarshal([]byte(strResObj), &resObj)
 
-		conInfo := GetConcurrencyInfo(resObj.Company, resObj.Tenant, resObj.ResourceId, resObj.Class, resObj.Type, resObj.Category)
+		conInfo := GetConcurrencyInfo(resObj.Company, resObj.Tenant, resObj.ResourceId, ReqClass, ReqType, ReqCategory)
 
-		metaData := GetReqMetaData(resObj.Company, resObj.Tenant, resObj.Class, resObj.Type, resObj.Category)
+		metaData := GetReqMetaData(resObj.Company, resObj.Tenant, ReqClass, ReqType, ReqCategory)
 
 		if conInfo.RejectCount < metaData.MaxRejectCount {
-			ClearSlotOnMaxRecerved(resObj, metaData)
+			ClearSlotOnMaxRecerved(ReqClass, ReqType, ReqCategory, resObj, metaData)
 
 			var tagArray = make([]string, 8)
 
 			tagArray[0] = fmt.Sprintf("company_%d", resObj.Company)
 			tagArray[1] = fmt.Sprintf("tenant_%d", resObj.Tenant)
-			tagArray[2] = fmt.Sprintf("class_%s", resObj.Class)
-			tagArray[3] = fmt.Sprintf("type_%s", resObj.Type)
-			tagArray[4] = fmt.Sprintf("category_%s", resObj.Category)
+			tagArray[2] = fmt.Sprintf("class_%s", ReqClass)
+			tagArray[3] = fmt.Sprintf("type_%s", ReqType)
+			tagArray[4] = fmt.Sprintf("category_%s", ReqCategory)
 			tagArray[5] = fmt.Sprintf("state_%s", "Available")
 			tagArray[6] = fmt.Sprintf("resourceid_%s", resObj.ResourceId)
 			tagArray[7] = fmt.Sprintf("objtype_%s", "CSlotInfo")

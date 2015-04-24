@@ -2,6 +2,7 @@
 var redisHandler = require('./RedisHandler.js');
 var sortArray = require('./SortArray.js');
 var reqQueueHandler = require('./ReqQueueHandler.js');
+var resourceHandler = require('./ResourceHandler.js');
 
 var AddRequest = function (requestObj, callback) {
     var key = util.format('Request:%d:%d:%s', requestObj.Company, requestObj.Tenant, requestObj.SessionId);
@@ -25,15 +26,8 @@ var AddRequest = function (requestObj, callback) {
         if (err) {
             console.log(err);
         }
-        else if (reply === "OK") {
-            if (requestObj.ReqHandlingAlgo === "QUEUE") {
-                reqQueueHandler.AddRequestToQueue(requestObj, function (err, result) {
-                    if (err) {
-                        console.log(err);
-                    }
-                });
-            }
-        }
+        SetRequestState(requestObj.Company, requestObj.Tenant, requestObj.SessionId, "N/A", function (err, result) {
+        });
         callback(err, reply, vid);
     });
 };
@@ -92,7 +86,7 @@ var RemoveRequest = function (company, tenant, sessionId, callback) {
             }
             
             if (requestObj.ReqHandlingAlgo === "QUEUE") {
-                reqQueueHandler.RemoveRequestFromQueue(requestObj, function (err, result) {
+                reqQueueHandler.RemoveRequestFromQueue(requestObj.QueueId, requestObj.QueueId.SessionId, function (err, result) {
                     if (err) {
                         console.log(err);
                     }
@@ -103,7 +97,61 @@ var RemoveRequest = function (company, tenant, sessionId, callback) {
                     callback(err, "false");
                 }
                 else {
+                    var reqStateKey = util.format('RequestState:%d:%d:%s', company, tenant, sessionId);
+                    redisHandler.RemoveObj(reqStateKey, function () { });
                     callback(null, result);
+                }
+            });
+        }
+    });
+};
+
+var RejectRequest = function (company, tenant, sessionId, callback) {
+    var key = util.format('Request:%s:%s:%s', company, tenant, sessionId);
+    redisHandler.GetObj(key, function (err, obj) {
+        if (err) {
+            callback(err, "false");
+        }
+        else {
+            var requestObj = JSON.parse(obj);
+            var stags = ["company_"+company+"", "tenant_"+tenant+ "", "class_"+ requestObj.Class+ "", "type_"+ requestObj.Type+ "", "category_"+ requestObj.Category+ "", "objtype_CSlotInfo", "handlingrequest_"+sessionId+ ""];
+            
+            redisHandler.SearchObj_T(stags, function (err, result) {
+                if (err) {
+                    console.log(err);
+                }
+                else {
+                    if (result.length == 1) {
+                        var csObj = result[0];
+                        resourceHandler.UpdateSlotStateAvailable(company, tenant, csObj.Class, csObj.Type, csObj.Category, csObj.ResourceId, csObj.SlotId, "Reject", function (err, reply) {
+                            if (err) {
+                                console.log(err);
+                            }
+                        });
+                    }
+                }
+            });
+
+            SetRequestState(requestObj.Company, requestObj.Tenant, requestObj.SessionId, "QUEUED", function (err, result) {
+                if (err) {
+                    console.log(err);
+                    callback(err, "false");
+                }
+                else {
+                    reqQueueHandler.ReAddRequestToQueue(requestObj, function (err, result) {
+                        if (err) {
+                            console.log(err);
+                            callback(err, "false");
+                        }
+                        else if (result == "OK") {
+                            console.log("Request Readded to Queue Success");
+                            callback(err, "true");
+                        }
+                        else {
+                            console.log("Request Readded to Queue Failed");
+                            callback(err, "false");
+                        }
+                    });
                 }
             });
         }
@@ -190,12 +238,24 @@ var SearchProcessingRequestByTags = function (tags, callback) {
     }
 };
 
+var SetRequestState = function (company, tenant, sessionId, state, callback) {
+    var key = util.format('RequestState:%d:%d:%s', company, tenant, sessionId);
+    redisHandler.SetObj(key, state, function (err, result) {
+        if (err) {
+            console.log(err);
+        }
+        callback(err, result);
+    });
+};
+
 module.exports.AddRequest = AddRequest;
 module.exports.SetRequest = SetRequest;
 module.exports.RemoveRequest = RemoveRequest;
+module.exports.RejectRequest = RejectRequest;
 module.exports.GetRequest = GetRequest;
 module.exports.SearchRequestByTags = SearchRequestByTags;
 module.exports.AddProcessingRequest = AddProcessingRequest;
+module.exports.SetRequestState = SetRequestState;
 module.exports.GetProcessingRequest = GetProcessingRequest;
 module.exports.RemoveProcessingRequest = RemoveProcessingRequest;
 module.exports.SearchProcessingRequestByTags = SearchProcessingRequestByTags;

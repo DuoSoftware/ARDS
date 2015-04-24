@@ -17,16 +17,16 @@ const layout = "2006-01-02T15:04:05Z07:00"
 
 type HandlingAlgo struct {
 	gorest.RestService `root:"/HandlingAlgo/" consumes:"application/json" produces:"application/json"`
-	singleResource     gorest.EndPoint `method:"GET" path:"/Single/{Company:int}/{Tenant:int}/{Class:string}/{Type:string}/{Category:string}/{SessionId:string}/{ResourceIds:string}" output:"string"`
+	singleResource     gorest.EndPoint `method:"GET" path:"/Single/{ReqClass:string}/{ReqType:string}/{ReqCategory:string}/{SessionId:string}/{ResourceIds:string}" output:"string"`
 }
 
-func (handlingAlgo HandlingAlgo) SingleResource(Company, Tenant int, Class, Type, Category, SessionId, ResourceIds string) string {
+func (handlingAlgo HandlingAlgo) SingleResource(ReqClass, ReqType, ReqCategory, SessionId, ResourceIds string) string {
 	ch := make(chan string)
 	fmt.Println(ResourceIds)
 	byt := []byte(ResourceIds)
 	var resourceIds []string
 	json.Unmarshal(byt, &resourceIds)
-	go SingleHandling(SessionId, resourceIds, ch)
+	go SingleHandling(ReqClass, ReqType, ReqCategory, SessionId, resourceIds, ch)
 	var result = <-ch
 	close(ch)
 	return result
@@ -60,7 +60,7 @@ func ReserveSlot(slotInfo CSlotInfo) bool {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		//panic(err)
 		return false
 	}
 	defer resp.Body.Close()
@@ -79,7 +79,7 @@ func ReserveSlot(slotInfo CSlotInfo) bool {
 	return false
 }
 
-func ClearSlotOnMaxRecerved(resObj Resource, metaData ReqMetaData) {
+func ClearSlotOnMaxRecerved(reqClass, reqType, reqCategory string, resObj Resource, metaData ReqMetaData) {
 	client, err := redis.Dial("tcp", redisIp)
 	errHndlr(err)
 	defer client.Close()
@@ -91,9 +91,9 @@ func ClearSlotOnMaxRecerved(resObj Resource, metaData ReqMetaData) {
 
 	tagArray[0] = fmt.Sprintf("company_%d", resObj.Company)
 	tagArray[1] = fmt.Sprintf("tenant_%d", resObj.Tenant)
-	tagArray[2] = fmt.Sprintf("class_%s", resObj.Class)
-	tagArray[3] = fmt.Sprintf("type_%s", resObj.Type)
-	tagArray[4] = fmt.Sprintf("category_%s", resObj.Category)
+	tagArray[2] = fmt.Sprintf("class_%s", reqClass)
+	tagArray[3] = fmt.Sprintf("type_%s", reqType)
+	tagArray[4] = fmt.Sprintf("category_%s", reqCategory)
 	tagArray[5] = fmt.Sprintf("state_%s", "Reserved")
 	tagArray[6] = fmt.Sprintf("resourceid_%s", resObj.ResourceId)
 	tagArray[7] = fmt.Sprintf("objtype_%s", "CSlotInfo")

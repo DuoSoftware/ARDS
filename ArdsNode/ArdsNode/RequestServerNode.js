@@ -5,6 +5,7 @@ var resourceHandler = require('./ResourceHandler.js');
 var requestHandler = require('./RequestHandler.js');
 var reqServerHandler = require('./ReqServerHandler.js');
 var reqMetaHandler = require('./ReqMetaDataHandler.js');
+var reqQueueHandler = require('./ReqQueueHandler.js');
 
 var server = restify.createServer({
     name: 'ArdsServer',
@@ -382,8 +383,149 @@ server.get('/request/get/:company/:tenant/:sessionid', function (req, res, next)
 
 server.del('/request/remove/:company/:tenant/:sessionid', function (req, res, next) {
     var data = req.params;
-    
+    console.log("remove method hit :: SessionID: " + data["sessionid"]);
     requestHandler.RemoveRequest(data["company"], data["tenant"], data["sessionid"], function (err, result) {
+        if (err) {
+            res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(err);
+        }
+        else {
+            console.log(result);
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(result);
+        }
+    });
+    return next();
+});
+
+server.del('/request/reject/:company/:tenant/:sessionid/:reason', function (req, res, next) {
+    var data = req.params;
+    console.log("reject method hit :: SessionID: "+ data["sessionid"]+" :: Reason: "+ data["reason"]);
+    if (data["reason"] == "NoSession" || data["reason"] == "ClientRejected") {
+        requestHandler.RemoveRequest(data["company"], data["tenant"], data["sessionid"], function (err, result) {
+            if (err) {
+                res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(err);
+            }
+            else {
+                console.log(result);
+                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(result);
+            }
+        });
+    }
+    else {
+        requestHandler.RejectRequest(data["company"], data["tenant"], data["sessionid"], function (err, result) {
+            if (err != null) {
+                res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(err);
+            }
+            else {
+                console.log(result);
+                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                var resDatat = JSON.stringify(result);
+                res.end(resDatat);
+            }
+        });
+    }
+    return next();
+});
+
+server.post('/request/state/update/na', function (req, res, next) {
+    requestHandler.SetRequestState(req.body.Company, req.body.Tenant, req.body.SessionId, "N/A", function (err, result) {
+        if (err != null) {
+            res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(err);
+        }
+        else {
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(result);
+        }
+    });
+    
+    return next();
+});
+
+server.post('/request/state/update/queued', function (req, res, next) {
+    requestHandler.SetRequestState(req.body.Company, req.body.Tenant, req.body.SessionId, "QUEUED", function (err, result) {
+        if (err != null) {
+            res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(err);
+        }
+        else {
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(result);
+        }
+    });
+    
+    return next();
+});
+
+server.post('/request/state/update/trying', function (req, res, next) {
+    requestHandler.SetRequestState(req.body.Company, req.body.Tenant, req.body.SessionId, "TRYING", function (err, result) {
+        if (err != null) {
+            res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(err);
+        }
+        else {
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(result);
+        }
+    });
+    
+    return next();
+});
+
+
+
+server.post('/queue/add', function (req, res, next) {
+    reqQueueHandler.AddRequestToQueue(req.body, function (err, result) {
+        if (err) {
+            res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(err);
+        }
+        else if (result === "OK") {
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end("true");
+        }
+        else {
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end("False");
+        }
+    });
+    return next();
+});
+
+server.post('/queue/readd', function (req, res, next) {
+    reqQueueHandler.ReAddRequestToQueue(req.body, function (err, result) {
+        if (err) {
+            res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(err);
+        }
+        else if (result === "OK") {
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end("true");
+        }
+        else {
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end("False");
+        }
+    });
+    return next();
+});
+
+server.post('/queue/setnextprocessingitem', function (req, res, next) {
+    reqQueueHandler.SetNextProcessingItem(req.body.queueId, req.body.processingHashId);
+
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end("true");
+    return next();
+});
+
+server.del('/queue/remove/:company/:tenant/:sessionid', function (req, res, next) {
+    var data = req.params;
+    
+    reqQueueHandler.RemoveRequestFromQueue(data["queueId"], data["sessionid"], function (err, result) {
         if (err) {
             res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
             res.end(err);
