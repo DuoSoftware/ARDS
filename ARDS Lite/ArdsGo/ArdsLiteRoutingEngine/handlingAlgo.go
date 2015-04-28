@@ -1,0 +1,132 @@
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"github.com/fzzy/radix/redis"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+)
+
+func SingleResourceAlgo(ReqClass, ReqType, ReqCategory, SessionId string, ResourceIds []string) string {
+	var result = SingleHandling(ReqClass, ReqType, ReqCategory, SessionId, ResourceIds)
+	return result
+
+}
+
+func GetResourceCSlotUrl() string {
+	var resourceUrl string
+	file, _ := os.Open("conf.json")
+	decoder := json.NewDecoder(file)
+	configuration := Configuration{}
+	err := decoder.Decode(&configuration)
+	if err != nil {
+		fmt.Println("error:", err)
+		resourceUrl = "http://localhost:2225/resource/cs/update"
+	} else {
+		resourceUrl = configuration.ResourceCSlotUrl
+	}
+	return resourceUrl
+}
+
+func ReserveSlot(slotInfo CSlotInfo) bool {
+	url := GetResourceCSlotUrl()
+	fmt.Println("URL:>", url)
+
+	slotInfoJson, _ := json.Marshal(slotInfo)
+	var jsonStr = []byte(slotInfoJson)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		//panic(err)
+		return false
+	}
+	defer resp.Body.Close()
+
+	fmt.Println("response Status:", resp.Status)
+	fmt.Println("response Headers:", resp.Header)
+	body, _ := ioutil.ReadAll(resp.Body)
+	result := string(body)
+	fmt.Println("response Body:", result)
+	if result == "OK" {
+		fmt.Println("Return true")
+		return true
+	}
+
+	fmt.Println("Return false")
+	return false
+}
+
+func ClearSlotOnMaxRecerved(reqClass, reqType, reqCategory string, resObj Resource, metaData ReqMetaData) {
+	client, err := redis.Dial("tcp", redisIp)
+	errHndlr(err)
+	defer client.Close()
+
+	// select database
+	r := client.Cmd("select", redisDb)
+	errHndlr(r.Err)
+	var tagArray = make([]string, 8)
+
+	tagArray[0] = fmt.Sprintf("company_%d", resObj.Company)
+	tagArray[1] = fmt.Sprintf("tenant_%d", resObj.Tenant)
+	tagArray[2] = fmt.Sprintf("class_%s", reqClass)
+	tagArray[3] = fmt.Sprintf("type_%s", reqType)
+	tagArray[4] = fmt.Sprintf("category_%s", reqCategory)
+	tagArray[5] = fmt.Sprintf("state_%s", "Reserved")
+	tagArray[6] = fmt.Sprintf("resourceid_%s", resObj.ResourceId)
+	tagArray[7] = fmt.Sprintf("objtype_%s", "CSlotInfo")
+
+	tags := fmt.Sprintf("tag:*%s*", strings.Join(tagArray, "*"))
+	fmt.Println(tags)
+	reservedSlots, _ := client.Cmd("keys", tags).List()
+
+	for _, tagKey := range reservedSlots {
+		strslotKey, _ := client.Cmd("get", tagKey).Str()
+		fmt.Println(strslotKey)
+
+		strslotObj, _ := client.Cmd("get", strslotKey).Str()
+		fmt.Println(strslotObj)
+
+		var slotObj CSlotInfo
+		json.Unmarshal([]byte(strslotObj), &slotObj)
+
+		fmt.Println("Datetime Info" + slotObj.LastReservedTime)
+		t, _ := time.Parse(layout, slotObj.LastReservedTime)
+		t1 := int(time.Now().Sub(t).Seconds())
+		t2 := metaData.MaxReservedTime
+		fmt.Println(fmt.Sprintf("Time Info T1: %d", t1))
+		fmt.Println(fmt.Sprintf("Time Info T2: %d", t2))
+		if t1 > t2 {
+			slotObj.State = "Available"
+			slotObj.OtherInfo = "ClearReserved"
+
+			ReserveSlot(slotObj)
+		}
+	}
+}
+
+func GetReqMetaData(_company, _tenent int, _class, _type, _category string) ReqMetaData {
+	client, err := redis.Dial("tcp", redisIp)
+	errHndlr(err)
+	defer client.Close()
+
+	// select database
+	r := client.Cmd("select", redisDb)
+	errHndlr(r.Err)
+	key := fmt.Sprintf("ReqMETA:%d:%d:%s:%s:%s", _company, _tenent, _class, _type, _category)
+	fmt.Println(key)
+	strMetaObj, _ := client.Cmd("get", key).Str()
+	fmt.Println(strMetaObj)
+
+	var metaObj ReqMetaData
+	json.Unmarshal([]byte(strMetaObj), &metaObj)
+
+	return metaObj
+}

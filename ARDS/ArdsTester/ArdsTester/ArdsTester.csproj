@@ -47,6 +47,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CallbackTest.cs" />
+    <Compile Include="ICallbackTest.cs" />
     <Compile Include="ReqQueue.cs" />
     <Compile Include="StartArds.cs" />
     <Compile Include="Continue.cs" />

@@ -13,11 +13,13 @@ namespace ArdsTester
         {
             try
             {
+                using (var host3 = new ServiceHost(typeof(CallbackTest)))
                 using(var host1 = new ServiceHost(typeof(ContinueArds)))
                 using (var host2 = new ServiceHost(typeof(StartArds)))
                 {
                     host1.Open();
                     host2.Open();
+                    host3.Open();
                     Console.WriteLine("Press Enter To Exit!");
 
                     Console.ReadLine();

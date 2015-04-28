@@ -1,0 +1,10 @@
+{
+  "name": "ArdsNode",
+  "version": "0.0.0",
+  "description": "ArdsNode",
+  "main": "app.js",
+  "author": {
+    "name": "Heshan.i",
+    "email": ""
+  }
+}
