@@ -48,7 +48,7 @@ var AddRequest = function (reqPreObj, callback) {
                                 }
                                 else {
                                     console.log("Request added to queue. sessionId :: " + requestObj.SessionId);
-                                    callback(err, "OK", vid);
+                                    callback(err, "Request added to queue. sessionId :: " + requestObj.SessionId, vid);
                                 }
                             });
                             break;

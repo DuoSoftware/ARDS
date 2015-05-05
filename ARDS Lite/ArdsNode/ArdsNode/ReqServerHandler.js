@@ -66,8 +66,8 @@ var RemoveRequestServer = function (company, tenant, serverId, callback) {
 };
 
 var SendCallBack = function (serverurl, resultToSend, callback) {
-    var surl = util.format('%s//%s', url.parse(serverurl).protocol, url.parse(serverurl).host);
-    restClientHandler.DoPost(surl, url.parse(serverurl).path, resultToSend, function (err, res, result) {
+    //var surl = util.format('%s//%s', url.parse(serverurl).protocol, url.parse(serverurl).host);
+    restClientHandler.DoPostDirect(serverurl, resultToSend, function (err, res, result) {
         if (err) {
             console.log(err);
             callback(false, "error");

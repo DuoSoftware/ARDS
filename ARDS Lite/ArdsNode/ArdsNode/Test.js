@@ -10,6 +10,11 @@
 //var configHandler = require('./Config.json');
 //console.log(configHandler.basicSelectionUrl);
 //console.log("");
+//var util = require('util');
+//var key = "Resource:1:3:555555555";
+//var lockKey = util.format('%s', key.split(":").join(""));
+//console.log("key:: " + key);
+//console.log("lockKey:: " + lockKey);
 
 var restify = require('restify');
 

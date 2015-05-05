@@ -12,12 +12,22 @@ var ContinueArds = function (request, callback) {
     if (request.ReqHandlingAlgo == "QUEUE") {
         console.log("Continue Queued Rqquest:: hResource : "+ request.HandlingResource);
         handlingResource = request.HandlingResource;
+
+        DoReplyServing(request, handlingResource, function (reply) {
+            callback(reply);
+        });
     }
     else {
-        var params = util.format('/%d/%d/%s/%s/%s/%s/%s/%s', request.Company, request.Tenant, request.SessionId, request.Class, request.Type, request.Category, request.SelectionAlgo, request.HandlingAlgo);
-        handlingResource = restClientHandler.DoGetSync(configHandler.resourceSelectionUrl, params);
+        var params = util.format('/resourceselection/getresource/%d/%d/%s/%s/%s/%s/%s/%s', request.Company, request.Tenant, request.SessionId, request.Class, request.Type, request.Category, request.SelectionAlgo, request.HandlingAlgo);
+        restClientHandler.DoGet(configHandler.resourceSelectionUrl, params, function (err, res, obj) {            
+            DoReplyServing(request, JSON.stringify(obj), function (reply) {
+                callback(reply);
+            });
+        });
     }
+};
 
+var DoReplyServing = function (request, handlingResource, callback) {
     switch (request.ServingAlgo) {
         case "CALLBACK":
             if (handlingResource != "No matching resources at the moment") {
@@ -30,7 +40,7 @@ var ContinueArds = function (request, callback) {
                     var pHashId = util.format('ProcessingHash:%d:%d', request.Company, request.Tenant);
                     reqQueueHandler.SetNextProcessingItem(request.QueueId, pHashId);
                 }
-
+                
                 var hrOtherData = JSON.parse(handlingResource);
                 var postDataString = { SessionID: request.SessionId, Extention: hrOtherData.Extention, DialHostName: hrOtherData.DialHostName };
                 reqServerHandler.SendCallBack(request.RequestServerUrl, postDataString, function (result, msg) {

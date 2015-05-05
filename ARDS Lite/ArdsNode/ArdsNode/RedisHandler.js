@@ -9,6 +9,9 @@ client.on("error", function (err) {
     console.log("Error " + err);
 });
 
+var lock = require("redis-lock")(client);
+
+
 var SetTags = function (tagKey, objKey, callback) {
     var tagMeta = util.format('tagMeta:%s', objKey);
     client.get(tagMeta, function (err, result) {
@@ -65,27 +68,35 @@ var SetTags = function (tagKey, objKey, callback) {
 };
 
 var SetObj = function (key, obj, callback) {
-    client.set(key, obj, function (error, reply) {
-        if (error) {
-            callback(error, null);
-        }
-        else {
-            callback(null, reply);
-        }
+    //var lockKey = util.format('%s', key.split(":").join(""));
+    lock(key, 500, function (done) {
+        client.set(key, obj, function (error, reply) {
+            done();
+            if (error) {
+                callback(error, null);
+            }
+            else {
+                callback(null, reply);
+            }
+        });
     });
 };
 
 var RemoveObj = function (key, callback) {
-    client.del(key, function (err, reply) {
-        if (err) {
-            console.log(error);
-        }
-        else if (reply === 1) {
-            callback(null, "true");
-        }
-        else {
-            callback(null, "false");
-        }
+    //var lockKey = util.format('%s', key.split(":").join(""));
+    lock(key, 500, function (done) {
+        client.del(key, function (err, reply) {
+            done();
+            if (err) {
+                console.log(error);
+            }
+            else if (reply === 1) {
+                callback(null, "true");
+            }
+            else {
+                callback(null, "false");
+            }
+        });
     });
 };
 
@@ -102,76 +113,90 @@ var GetObj = function (key, callback) {
 
 
 var AddObj_T = function (key, obj, tags, callback) {
-    var vid = 1;
-    if (Array.isArray(tags)) {
-        var tagkey = util.format('tag:%s', tags.join(":"));
-
-        SetTags(tagkey, key, function (err, reply) {
-            if (err)
-                console.log(error);
-            else if (reply === "OK") {
-                
-                client.set(key, obj, function (error, reply) {
-                    if (error) {
-                        console.log(error);
-                        client.del(tagkey, function (err, reply) {
-                        });
-                        client.del(versionkey, function (err, reply) {
-                        });
-                    }
-                    else {
-                        callback(null, reply);
-                    }
-                });
-            }
-        });
-    }
-    
+    //var lockKey = util.format('%s', key.split(":").join(""));
+    lock(key, 500, function (done) {
+        var vid = 1;
+        if (Array.isArray(tags)) {
+            var tagkey = util.format('tag:%s', tags.join(":"));
+            
+            SetTags(tagkey, key, function (err, reply) {
+                if (err) {
+                    done();
+                    console.log(error);
+                }
+                else if (reply === "OK") {
+                    client.set(key, obj, function (error, reply) {
+                        done();
+                        if (error) {
+                            console.log(error);
+                            client.del(tagkey, function (err, reply) {
+                            });
+                            client.del(versionkey, function (err, reply) {
+                            });
+                        }
+                        else {
+                            callback(null, reply);
+                        }
+                    });
+                }
+            });
+        }
+    });
 };
 
 var SetObj_T = function (key, obj, tags, callback) {
-    if (Array.isArray(tags)) {
-        var tagkey = util.format('tag:%s', tags.join(":"));
-        SetTags(tagkey, key, function (err, reply) {
-            if (err)
-                console.log(error);
-            else if (reply === "OK") {
-                client.set(key, obj, function (error, reply) {
-                    if (error)
-                        console.log(error);
-                    else {
-                        callback(null, reply);
-                    }
-                });
-            }
-        });
-    }
+    //var lockKey = util.format('%s', key.split(":").join(""));
+    lock(key, 500, function (done) {
+        if (Array.isArray(tags)) {
+            var tagkey = util.format('tag:%s', tags.join(":"));
+            SetTags(tagkey, key, function (err, reply) {
+                if (err) {
+                    done();
+                    console.log(error);
+                }
+                else if (reply === "OK") {
+                    client.set(key, obj, function (error, reply) {
+                        done();
+                        if (error)
+                            console.log(error);
+                        else {
+                            callback(null, reply);
+                        }
+                    });
+                }
+            });
+        }
+    });
 };
 
 var RemoveObj_T = function (key, tags, callback) {
-    if (Array.isArray(tags)) {
-        var tagMeta = util.format('tagMeta:%s', key);
-        client.get(tagMeta, function (err, result) {
+    //var lockKey = util.format('%s', key.split(":").join(""));
+    lock(key, 500, function (done) {
+        if (Array.isArray(tags)) {
+            var tagMeta = util.format('tagMeta:%s', key);
+            client.get(tagMeta, function (err, result) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    client.del(result, function (err, reply) { });
+                    client.del(tagMeta, function (err, reply) { });
+                }
+            });
+        
+        }
+        
+        client.del(key, function (err, reply) {
+            done();
             if (err) {
-                console.log(err);
-            } else {
-                client.del(result, function (err, reply) { });
-                client.del(tagMeta, function (err, reply) { });
+                console.log(error);
+            }
+            else if (reply === 1) {
+                callback(null, "true");
+            }
+            else {
+                callback(null, "false");
             }
         });
-        
-    }
-    
-    client.del(key, function (err, reply) {
-        if (err) {
-            console.log(error);
-        }
-        else if (reply === 1) {
-            callback(null, "true");
-        }
-        else {
-            callback(null, "false");
-        }
     });
 };
 
@@ -223,76 +248,94 @@ var SearchObj_T = function (tags, callback) {
 
 
 var AddObj_V = function (key, obj, callback) {
-    var vid = 1;
-    var versionkey = util.format('version:%s', key);
-    client.set(versionkey, vid, function (err, reply) {
-        if (err) {
-            console.log(error);
-            client.del(tagkey, function (err, reply) {
-            });
-        }
-        else if (reply === "OK") {
-            client.set(key, obj, function (error, reply) {
-                if (error) {
-                    console.log(error);
-                    client.del(tagkey, function (err, reply) {
-                    });
-                    client.del(versionkey, function (err, reply) {
-                    });
-                }
-                else {
-                    callback(null, reply, vid);
-                }
-            });
-        }
+    //var lockKey = util.format('%s', key.split(":").join(""));
+    lock(key, 500, function (done) {
+        var vid = 1;
+        var versionkey = util.format('version:%s', key);
+        client.set(versionkey, vid, function (err, reply) {
+            if (err) {
+                done();
+                console.log(error);
+                client.del(tagkey, function (err, reply) {
+                });
+            }
+            else if (reply === "OK") {
+                client.set(key, obj, function (error, reply) {
+                    done();
+                    if (error) {
+                        console.log(error);
+                        client.del(tagkey, function (err, reply) {
+                        });
+                        client.del(versionkey, function (err, reply) {
+                        });
+                    }
+                    else {
+                        callback(null, reply, vid);
+                    }
+                });
+            }
+        });
     });    
 };
 
 var SetObj_V = function (key, obj, cvid, callback) {
-    var versionkey = util.format('version:%s', key);
-    client.get(versionkey, function (err, reply) {
-        if (err)
-            console.log(err);
-        else if (reply === null) {
-            AddObj_V(key, obj, callback);
-        }
-        else if (reply === cvid) {
-            var versionkey = util.format('version:%s', key);
-            client.incr(versionkey, function (err, reply) {
-                if (err)
-                    console.log(error);
-                else {
-                    var vid = reply
-                    client.set(key, obj, function (error, reply) {
-                        if (error)
-                            console.log(error);
-                        else {
-                            callback(null, reply, vid);
-                        }
-                    });
-                }
-            });
-        }
-        else {
-            callback(null, "VERSION_MISMATCHED", cvid);
-        }
+    //var lockKey = util.format('%s', key.split(":").join(""));
+    lock(key, 500, function (done) {
+        var versionkey = util.format('version:%s', key);
+        client.get(versionkey, function (err, reply) {
+            if (err) {
+                done();
+                console.log(err);
+            }
+            else if (reply === null) {
+                done();
+                AddObj_V(key, obj, callback);
+            }
+            else if (reply === cvid) {
+                var versionkey = util.format('version:%s', key);
+                client.incr(versionkey, function (err, reply) {
+                    if (err) {
+                        done();
+                        console.log(error);
+                    }
+                    else {
+                        var vid = reply
+                        client.set(key, obj, function (error, reply) {
+                            done();
+                            if (error)
+                                console.log(error);
+                            else {
+                                callback(null, reply, vid);
+                            }
+                        });
+                    }
+                });
+            }
+            else {
+                callback(null, "VERSION_MISMATCHED", cvid);
+            }
+        });
     });
 };
 
 var RemoveObj_V = function (key, callback) {
-    var versionkey = util.format('version:%s', key);
-    client.del(versionkey, function (err, reply) { });
-    
-    client.del(key, function (err, reply) {
-        if (err) {
-            console.log(error);
-        }
-        else if (reply === 1) {
-            callback(null, "true");
-        }
-        else {
-            callback(null, "false");
-        }
+    //var lockKey = util.format('%s', key.split(":").join(""));
+    lock(key, 500, function (done) {
+        var versionkey = util.format('version:%s', key);
+        client.del(versionkey, function (err, reply) { });
+        
+        client.del(key, function (err, reply) {
+            done();
+            if (err) {
+                console.log(error);
+            }
+            else if (reply === 1) {
+                callback(null, "true");
+            }
+            else {
+                callback(null, "false");
+            }
+        });
     });
 };
 
@@ -317,108 +360,130 @@ var GetObj_V = function (key, callback) {
 
 
 var AddObj_V_T = function (key, obj, tags, callback) {
-    var vid = 1;
-    if (Array.isArray(tags)) {
-        var tagkey = util.format('tag:%s', tags.join(":"));
-        SetTags(tagkey, key, function (err, reply) {
-            if (err)
-                console.log(error);
-            else if (reply === "OK") {
-                var versionkey = util.format('version:%s', key);
-                client.set(versionkey, vid, function (err, reply) {
-                    if (err) {
-                        console.log(error);
-                        client.del(tagkey, function (err, reply) {
-                        });
-                    }
-                    else if (reply === "OK") {
-                        client.set(key, obj, function (error, reply) {
-                            if (error) {
-                                console.log(error);
-                                client.del(tagkey, function (err, reply) {
-                                });
-                                client.del(versionkey, function (err, reply) {
-                                });
-                            }
-                            else {
-                                callback(null, reply, vid);
-                            }
-                        });
-                    }
-                });
-            }
-        });
-    }
-    
-};
-
-var SetObj_V_T = function (key, obj, tags, cvid, callback) {
-    var versionkey = util.format('version:%s', key);
-    client.get(versionkey, function (err, reply) {
-        if (err)
-            console.log(err);
-        else if (reply === null) {
-            AddObj_V_T(key, obj, tags, callback);
-        }
-        else if (reply === cvid) {
-            if (Array.isArray(tags)) {
-                var tagkey = util.format('tag:%s', tags.join(":"));
-                SetTags(tagkey, key, function (err, reply) {
-                    if (err)
-                        console.log(error);
-                    else if (reply === "OK") {
-                        var versionkey = util.format('version:%s', key);
-                        client.incr(versionkey, function (err, reply) {
-                            if (err)
-                                console.log(error);
-                            else {
-                                var vid = reply
-                                client.set(key, obj, function (error, reply) {
-                                    if (error)
-                                        console.log(error);
-                                    else {
-                                        callback(null, reply, vid);
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-        }
-        else {
-            callback(null, "VERSION_MISMATCHED", cvid);
+    //var lockKey = util.format('%s', key.split(":").join(""));
+    lock(key, 500, function (done) {
+        var vid = 1;
+        if (Array.isArray(tags)) {
+            var tagkey = util.format('tag:%s', tags.join(":"));
+            SetTags(tagkey, key, function (err, reply) {
+                if (err) {
+                    done();
+                    console.log(error);
+                }
+                else if (reply === "OK") {
+                    var versionkey = util.format('version:%s', key);
+                    client.set(versionkey, vid, function (err, reply) {
+                        if (err) {
+                            done();
+                            console.log(error);
+                            client.del(tagkey, function (err, reply) {
+                            });
+                        }
+                        else if (reply === "OK") {
+                            client.set(key, obj, function (error, reply) {
+                                done();
+                                if (error) {
+                                    console.log(error);
+                                    client.del(tagkey, function (err, reply) {
+                                    });
+                                    client.del(versionkey, function (err, reply) {
+                                    });
+                                }
+                                else {
+                                    callback(null, reply, vid);
+                                }
+                            });
+                        }
+                    });
+                }
+            });
         }
     });
 };
 
-var RemoveObj_V_T = function (key, tags, callback) {
-    if (Array.isArray(tags)) {
-        var tagMeta = util.format('tagMeta:%s', key);
-        client.get(tagMeta, function (err, result) {
+var SetObj_V_T = function (key, obj, tags, cvid, callback) {
+    //var lockKey = util.format('%s', key.split(":").join(""));
+    lock(key, 500, function (done) {
+        var versionkey = util.format('version:%s', key);
+        client.get(versionkey, function (err, reply) {
             if (err) {
+                done();
                 console.log(err);
-            } else {
-                client.del(result, function (err, reply) { });
-                client.del(tagMeta, function (err, reply) { });
+            }
+            else if (reply === null) {
+                done();
+                AddObj_V_T(key, obj, tags, callback);
+            }
+            else if (reply === cvid) {
+                if (Array.isArray(tags)) {
+                    var tagkey = util.format('tag:%s', tags.join(":"));
+                    SetTags(tagkey, key, function (err, reply) {
+                        if (err) {
+                            done();
+                            console.log(error);
+                        }
+                        else if (reply === "OK") {
+                            var versionkey = util.format('version:%s', key);
+                            client.incr(versionkey, function (err, reply) {
+                                if (err) {
+                                    done();
+                                    console.log(error);
+                                }
+                                else {
+                                    var vid = reply
+                                    client.set(key, obj, function (error, reply) {
+                                        done();
+                                        if (error)
+                                            console.log(error);
+                                        else {
+                                            callback(null, reply, vid);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+            else {
+                done();
+                callback(null, "VERSION_MISMATCHED", cvid);
             }
         });
-    }
-    
-    var versionkey = util.format('version:%s', key);
-    client.del(versionkey, function (err, reply) { });
-    
-    client.del(key, function (err, reply) {
-        if (err) {
-            console.log(error);
-            callback(err, "false");
+    });
+};
+
+var RemoveObj_V_T = function (key, tags, callback) {
+    //var lockKey = util.format('%s', key.split(":").join(""));
+    lock(key, 500, function (done) {
+        if (Array.isArray(tags)) {
+            var tagMeta = util.format('tagMeta:%s', key);
+            client.get(tagMeta, function (err, result) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    client.del(result, function (err, reply) { });
+                    client.del(tagMeta, function (err, reply) { });
+                }
+            });
         }
-        else if (reply === 1) {
-            callback(null, "true");
-        }
-        else {
-            callback(null, "false");
-        }
+        
+        var versionkey = util.format('version:%s', key);
+        client.del(versionkey, function (err, reply) { });
+        
+        client.del(key, function (err, reply) {
+            done();
+            if (err) {
+                console.log(error);
+                callback(err, "false");
+            }
+            else if (reply === 1) {
+                callback(null, "true");
+            }
+            else {
+                callback(null, "false");
+            }
+        });
     });
 };
 

@@ -329,13 +329,13 @@ server.post('/request/add', function (req, res, next) {
             res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
             res.end(err);
         }
-        else if (result === "OK") {
+        else if (result == null) {
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-            res.end("true");
+            res.end("False");
         }
         else {
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-            res.end("False");
+            res.end(result);
         }
     });
     return next();

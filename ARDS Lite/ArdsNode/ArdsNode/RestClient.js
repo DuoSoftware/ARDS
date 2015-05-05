@@ -1,5 +1,6 @@
 ﻿var assert = require('assert');
 var restify = require('restify');
+var request = require('request');
 
 var client = function (url) {
     return restify.createJsonClient({
@@ -40,7 +41,18 @@ var DoPostSync = function (url, postData) {
     });
 };
 
+var DoPostDirect = function (serviceurl, postData, callback) {
+    request.post({ url: serviceurl, formData: postData }, function optionalCallback(err, httpResponse, body) {
+        if (err) {
+            return console.error('upload failed:', err);
+        }
+        console.log('Server returned: %j', body);
+        callback(err, httpResponse, body);
+    });
+};
+
 module.exports.DoGet = DoGet;
 module.exports.DoPost = DoPost;
 module.exports.DoGetSync = DoGetSync;
-module.exports.DoPostSync = DoPostSync; 
+module.exports.DoPostSync = DoPostSync;
+module.exports.DoPostDirect = DoPostDirect;
