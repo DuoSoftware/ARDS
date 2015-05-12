@@ -3,14 +3,17 @@ var reqServerHandler = require('./ReqServerHandler.js');
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var sort = require('./SortArray.js');
+var infoLogger = require('./InformationLogger.js');
 
-var execute = function (data, callback) {
-    var srs = SetRequestServer(data);
+var execute = function (logKey, data, callback) {
+    infoLogger.DetailLogger.log('info', '%s +++++++++++++++++++++++++ Start PreProcessor +++++++++++++++++++++++++', logKey);
+
+    var srs = SetRequestServer(logKey, data);
     var key = util.format('ReqMETA:%d:%d:%s:%s:%s', data.Company, data.Tenant, data.Class, data.Type, data.Category);
     var date = new Date();
     
     srs.on('server', function (url) {
-        redisHandler.GetObj(key, function (err, result) {
+        redisHandler.GetObj(logKey, key, function (err, result) {
             if (err) {
                 callback(err, null);
             }
@@ -38,6 +41,8 @@ var execute = function (data, callback) {
                 var queueId = util.format('Queue:%d:%d:%s:%s:%s:%s:%s', data.Company, data.Tenant, data.Class, data.Type, data.Category, attributeDataString, data.Priority.toUpperCase());
                 var date = new Date();
                 var requestObj = { Company: data.Company, Tenant: data.Tenant, Class: data.Class, Type: data.Type, Category: data.Category, SessionId: data.SessionId, AttributeInfo: attributeInfo, RequestServerId: data.RequestServerId, Priority: data.Priority.toUpperCase(), ArriveTime: date.toISOString(), OtherInfo: data.OtherInfo, ServingAlgo: metaObj.ServingAlgo, HandlingAlgo: metaObj.HandlingAlgo, SelectionAlgo: metaObj.SelectionAlgo, RequestServerUrl: url, QueueId: queueId, ReqHandlingAlgo: metaObj.ReqHandlingAlgo, ReqSelectionAlgo: metaObj.ReqSelectionAlgo};
+                infoLogger.DetailLogger.log('info', '%s PreProcessor Request Queue Id: %s', logKey, queueId);
+                infoLogger.DetailLogger.log('info', '%s Finished PreProcessor. Result: %s', logKey, requestObj);
                 callback(null, requestObj);
             }
         });
@@ -82,12 +87,12 @@ var AppendAttributeInfo = function (attInfo, attMetaData, att) {
 
 };
 
-var SetRequestServer = function (data) {
+var SetRequestServer = function (logKey, data) {
     var e = new EventEmitter();
     process.nextTick(function () {
         if (data.RequestServerId == "0") {
             var tags = ["company_"+data.Company, "tenant_" + data.Tenant, "class_" + data.Class, "type_" + data.Type, "category_" + data.Category];
-            reqServerHandler.SearchReqServerByTags(tags, function (err, result) {
+            reqServerHandler.SearchReqServerByTags(logKey, tags, function (err, result) {
                 if (err) {
                     e.emit('server', "");
                 }
@@ -98,7 +103,7 @@ var SetRequestServer = function (data) {
             });
         }
         else {
-            reqServerHandler.GetRequestServer(data.Company, data.Tenant, data.RequestServerId, function (err, reqServerResult) {
+            reqServerHandler.GetRequestServer(logKey, data.Company, data.Tenant, data.RequestServerId, function (err, reqServerResult) {
                 if (err) {
                     e.emit('server', "");
                 }

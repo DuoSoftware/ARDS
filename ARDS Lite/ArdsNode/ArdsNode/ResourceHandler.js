@@ -2,6 +2,7 @@
 var redisHandler = require('./RedisHandler.js');
 var EventEmitter = require('events').EventEmitter;
 var sortArray = require('./SortArray.js');
+var infoLogger = require('./InformationLogger.js');
 
 var SetConcurrencyInfo = function (data) {
     var e = new EventEmitter();
@@ -27,9 +28,9 @@ var SetConcurrencyInfo = function (data) {
     return (e);
 };
 
-var RemoveConcurrencyInfo = function (data, callback) {
+var RemoveConcurrencyInfo = function (logKey, data, callback) {
     for (var i in data) {
-        redisHandler.GetObj(data[i], function (err, tempObj) {
+        redisHandler.GetObj(logKey, data[i], function (err, tempObj) {
             var slotInfoTags = [];
             var obj = JSON.parse(tempObj);
             if (obj.ObjKey.search(/^(ConcurrencyInfo)[^\s]*/) != -1) {
@@ -39,7 +40,7 @@ var RemoveConcurrencyInfo = function (data, callback) {
                 slotInfoTags = ["company_" + obj.Company, "tenant_" + obj.Tenant, "class_" + obj.Class, "type_" + obj.Type, "category_" + obj.Category, "state_" + obj.State, "resourceid_" + obj.ResourceId, "objtype_CSlotInfo", "slotid_" + obj.SlotId];
             }
 
-            redisHandler.RemoveObj_V_T(obj.ObjKey, slotInfoTags, function (err, result) {
+            redisHandler.RemoveObj_V_T(logKey, obj.ObjKey, slotInfoTags, function (err, result) {
                 if (err) {
                     console.log(err);
                 }
@@ -48,14 +49,16 @@ var RemoveConcurrencyInfo = function (data, callback) {
     }
 };
 
-var RemoveResourceState = function (company, tenant, resourceid, callback) {
+var RemoveResourceState = function (logKey, company, tenant, resourceid, callback) {
     var StateKey = util.format('ResourceState:%d:%d:%s', company, tenant, resourceid);
-    redisHandler.RemoveObj(StateKey, function (err, result) {
+    redisHandler.RemoveObj(logKey, StateKey, function (err, result) {
         callback(err, result);
     });
 }
 
-var AddResource = function (basicData, callback) {
+var AddResource = function (logKey, basicData, callback) {
+    infoLogger.DetailLogger.log('info', '%s ************************* Start AddResource *************************', logKey);
+
     var concurrencyInfo = [];
     var sci = SetConcurrencyInfo(basicData.ConcurrencyInfo);
     
@@ -68,7 +71,7 @@ var AddResource = function (basicData, callback) {
             concurrencyInfo.push(slotInfokey);
 
             var jsonSlotObj = JSON.stringify(slotInfo);
-            redisHandler.AddObj_V_T(slotInfokey, jsonSlotObj, slotInfoTags, function (err, reply, vid) {
+            redisHandler.AddObj_V_T(logKey, slotInfokey, jsonSlotObj, slotInfoTags, function (err, reply, vid) {
                 if (err) {
                     console.log(err);
                 }
@@ -80,7 +83,7 @@ var AddResource = function (basicData, callback) {
         concurrencyInfo.push(cObjkey);
 
         var jsonConObj = JSON.stringify(concurrencyObj);
-        redisHandler.AddObj_V_T(cObjkey, jsonConObj, cObjTags, function (err, reply, vid) {
+        redisHandler.AddObj_V_T(logKey, cObjkey, jsonConObj, cObjTags, function (err, reply, vid) {
             if (err) {
                 console.log(err);
             }
@@ -103,27 +106,30 @@ var AddResource = function (basicData, callback) {
         }
         var jsonObj = JSON.stringify(resourceObj);
 
-        redisHandler.AddObj_V_T(key, jsonObj, tag, function (err, reply, vid) {
+        redisHandler.AddObj_V_T(logKey, key, jsonObj, tag, function (err, reply, vid) {
             var StateKey = util.format('ResourceState:%d:%d:%s', resourceObj.Company, resourceObj.Tenant, resourceObj.ResourceId);
-            redisHandler.SetObj(StateKey, "Available", function (err, result) {
+            redisHandler.SetObj(logKey, StateKey, "Available", function (err, result) {
             });
+            infoLogger.DetailLogger.log('info', '%s Finished AddResource. Result: %s', logKey, reply);
             callback(err, reply, vid);
         });
     });
 };
 
-var RemoveResource = function (company, tenant, resourceId, callback) {
+var RemoveResource = function (logKey, company, tenant, resourceId, callback) {
+    infoLogger.DetailLogger.log('info', '%s ************************* Start RemoveResource *************************', logKey);
+
     var key = util.format('Resource:%s:%s:%s', company, tenant, resourceId);
-    redisHandler.GetObj(key, function (err, obj) {
+    redisHandler.GetObj(logKey, key, function (err, obj) {
         if (err) {
             callback(err, "false");
         }
         else {
             
             var resourceObj = JSON.parse(obj);
-            RemoveConcurrencyInfo(resourceObj.ConcurrencyInfo, function () {
+            RemoveConcurrencyInfo(logKey, resourceObj.ConcurrencyInfo, function () {
             });
-            RemoveResourceState(resourceObj.Company, resourceObj.Tenant, resourceObj.ResourceId, function () {
+            RemoveResourceState(logKey, resourceObj.Company, resourceObj.Tenant, resourceObj.ResourceId, function () {
             });
             var tag = ["company_" + resourceObj.Company, "tenant_" + resourceObj.Tenant, "class_" + resourceObj.Class, "type_" + resourceObj.Type, "category_" + resourceObj.Category, "objtype_Resource", "resourceid_" + resourceObj.ResourceId];
             var tempAttributeList = [];
@@ -135,11 +141,13 @@ var RemoveResource = function (company, tenant, resourceId, callback) {
                 tag.push("attribute_" + sortedAttributes[k]);
             }
 
-            redisHandler.RemoveObj_V_T(key, tag, function (err, result) {
+            redisHandler.RemoveObj_V_T(logKey, key, tag, function (err, result) {
                 if (err) {
+                    infoLogger.DetailLogger.log('info', '%s Finished RemoveResource. Result: %s', logKey, "false");
                     callback(err, "false");
                 }
                 else {
+                    infoLogger.DetailLogger.log('info', '%s Finished RemoveResource. Result: %s', logKey, result);
                     callback(null, result);
                 }
             });
@@ -147,10 +155,12 @@ var RemoveResource = function (company, tenant, resourceId, callback) {
     });
 };
 
-var SetResource = function (basicObj, cVid, callback) {
+var SetResource = function (logKey, basicObj, cVid, callback) {
+    infoLogger.DetailLogger.log('info', '%s ************************* Start SetResource *************************', logKey);
+
     var key = util.format('Resource:%d:%d:%s', resourceObj.Company, resourceObj.Tenant, resourceObj.ResourceId);
     
-    redisHandler.GetObj(key, function (err, jobj) {
+    redisHandler.GetObj(logKey, key, function (err, jobj) {
         if (err) {
             console.log(err);
         }
@@ -169,39 +179,49 @@ var SetResource = function (basicObj, cVid, callback) {
             }
             var jsonObj = JSON.stringify(resourceObj);
             
-            redisHandler.SetObj_V_T(key, jsonObj, tag, cVid, function (err, reply, vid) {
+            redisHandler.SetObj_V_T(logKey, key, jsonObj, tag, cVid, function (err, reply, vid) {
+                infoLogger.DetailLogger.log('info', '%s Finished SetResource. Result: %s', logKey, reply);
                 callback(err, reply, vid);
             });
         }
     });
 };
 
-var GetResource = function (company, tenant, resourceId, callback) {
+var GetResource = function (logKey, company, tenant, resourceId, callback) {
+    infoLogger.DetailLogger.log('info', '%s ************************* Start GetResource *************************', logKey);
+
     var key = util.format('Resource:%s:%s:%s', company, tenant, resourceId);
-    redisHandler.GetObj_V(key, function (err, result, vid) {
+    redisHandler.GetObj_V(logKey, key, function (err, result, vid) {
+        infoLogger.DetailLogger.log('info', '%s Finished GetResource. Result: %s', logKey, result);
         callback(err, result, vid);
     });
 };
 
-var SearchResourcebyTags = function (tags, callback) {
+var SearchResourcebyTags = function (logKey, tags, callback) {
+    infoLogger.DetailLogger.log('info', '%s ************************* Start SearchResourcebyTags *************************', logKey);
+
     if (Array.isArray(tags)) {
         tags.push("objtype_Resource");
-        redisHandler.SearchObj_V_T(tags, function (err, result) {
+        redisHandler.SearchObj_V_T(logKey, tags, function (err, result) {
+            infoLogger.DetailLogger.log('info', '%s Finished SearchResourcebyTags. Result: %s', logKey, result);
             callback(err, result);
         });
     }
     else {
         var e = new Error();
         e.message = "tags must be a string array";
+        infoLogger.DetailLogger.log('info', '%s Finished SearchResourcebyTags. Result: %s', logKey, "tags must be a string array");
         callback(e, null);
     }
 };
 
-var UpdateLastConnectedTime = function (company, tenant, cinfoclass, type, category, resourceid, callback) {
+var UpdateLastConnectedTime = function (logKey, company, tenant, cinfoclass, type, category, resourceid, callback) {
+    infoLogger.DetailLogger.log('info', '%s ************************* Start UpdateLastConnectedTime *************************', logKey);
+
     var cObjkey = util.format('ConcurrencyInfo:%d:%d:%s:%s:%s:%s', company, tenant, resourceid, cinfoclass, type, category);
     var date = new Date();
 
-    redisHandler.GetObj_V(cObjkey, function (err, obj, vid) {
+    redisHandler.GetObj_V(logKey, cObjkey, function (err, obj, vid) {
         if (err) {
             console.log(err);
         }
@@ -211,18 +231,21 @@ var UpdateLastConnectedTime = function (company, tenant, cinfoclass, type, categ
             var jCObj = JSON.stringify(cObj);
             var cObjTags = ["company_" + cObj.Company, "tenant_" + cObj.Tenant, "class_" + cObj.Class, "type_" + cObj.Type, "category_" + cObj.Category, "resourceid_" + cObj.ResourceId, "objtype_ConcurrencyInfo"];
         
-            redisHandler.SetObj_V_T(cObjkey, jCObj, cObjTags, vid, function () {
+            redisHandler.SetObj_V_T(logKey, cObjkey, jCObj, cObjTags, vid, function () {
+                infoLogger.DetailLogger.log('info', '%s Finished UpdateLastConnectedTime. Result: %s', logKey, result);
                 callback(err, result, vid);
             });
         }
     });
 };
 
-var UpdateRejectCount = function (company, tenant, cinfoclass, type, category, resourceid, callback) {
+var UpdateRejectCount = function (logKey, company, tenant, cinfoclass, type, category, resourceid, callback) {
+    infoLogger.DetailLogger.log('info', '%s ************************* Start UpdateRejectCount *************************', logKey);
+
     var cObjkey = util.format('ConcurrencyInfo:%d:%d:%s:%s:%s:%s', company, tenant, resourceid, cinfoclass, type, category);
     var date = new Date();
     
-    redisHandler.GetObj_V(cObjkey, function (err, obj, vid) {
+    redisHandler.GetObj_V(logKey, cObjkey, function (err, obj, vid) {
         if (err) {
             console.log(err);
         }
@@ -232,16 +255,19 @@ var UpdateRejectCount = function (company, tenant, cinfoclass, type, category, r
             var jCObj = JSON.stringify(cObj);
             var cObjTags = ["company_" + cObj.Company, "tenant_" + cObj.Tenant, "class_" + cObj.Class, "type_" + cObj.Type, "category_" + cObj.Category, "resourceid_" + cObj.ResourceId, "objtype_ConcurrencyInfo"];
             
-            redisHandler.SetObj_V_T(cObjkey, jCObj, cObjTags, vid, function () {
+            redisHandler.SetObj_V_T(logKey, cObjkey, jCObj, cObjTags, vid, function () {
+                infoLogger.DetailLogger.log('info', '%s Finished UpdateRejectCount. Result: %s', logKey, result);
                 callback(err, result, vid);
             });
         }
     });
 };
 
-var UpdateSlotStateAvailable = function (company, tenant, slotclass, type, category, resourceid, slotid, otherInfo, callback) {
+var UpdateSlotStateAvailable = function (logKey, company, tenant, slotclass, type, category, resourceid, slotid, otherInfo, callback) {
+    infoLogger.DetailLogger.log('info', '%s ************************* Start UpdateSlotStateAvailable *************************', logKey);
+
     var slotInfokey = util.format('CSlotInfo:%s:%s:%s:%s:%s:%s:%s', company, tenant, resourceid, slotclass, type, category, slotid);
-    redisHandler.GetObj_V(slotInfokey, function (err, obj, vid) {
+    redisHandler.GetObj_V(logKey, slotInfokey, function (err, obj, vid) {
         if (err) {
             console.log(err);
             callback(err, false);
@@ -249,22 +275,25 @@ var UpdateSlotStateAvailable = function (company, tenant, slotclass, type, categ
         else {
             var tempObj = JSON.parse(obj);
             if (otherInfo == "Reject") {
-                UpdateRejectCount(tempObj.Company, tempObj.Tenant, tempObj.Class, tempObj.Type, tempObj.Category, tempObj.ResourceId, function () { });
+                UpdateRejectCount(logKey, tempObj.Company, tempObj.Tenant, tempObj.Class, tempObj.Type, tempObj.Category, tempObj.ResourceId, function () { });
             }
             tempObj.State = "Available";
             tempObj.HandlingRequest = "";
             var slotInfoTags = ["company_" + tempObj.Company, "tenant_" + tempObj.Tenant, "class_" + tempObj.Class, "type_" + tempObj.Type, "category_" + tempObj.Category, "state_" + tempObj.State, "resourceid_" + tempObj.ResourceId, "objtype_CSlotInfo", "slotid_" + tempObj.SlotId];
             var jsonObj = JSON.stringify(tempObj);
-            redisHandler.SetObj_V_T(slotInfokey, jsonObj, slotInfoTags, vid, function (err, reply, vid) {
+            redisHandler.SetObj_V_T(logKey, slotInfokey, jsonObj, slotInfoTags, vid, function (err, reply, vid) {
+                infoLogger.DetailLogger.log('info', '%s Finished UpdateSlotStateAvailable. Result: %s', logKey, reply);
                 callback(err, reply);
             });
         }
     });
 };
 
-var UpdateSlotStateReserved = function (company, tenant, slotclass, type, category, resourceid, slotid, sessionid, callback) {
+var UpdateSlotStateReserved = function (logKey, company, tenant, slotclass, type, category, resourceid, slotid, sessionid, callback) {
+    infoLogger.DetailLogger.log('info', '%s ************************* Start UpdateSlotStateReserved *************************', logKey);
+
     var slotInfokey = util.format('CSlotInfo:%s:%s:%s:%s:%s:%s:%s', company, tenant, resourceid, slotclass, type, category, slotid);
-    redisHandler.GetObj_V(slotInfokey, function (err, obj, vid) {
+    redisHandler.GetObj_V(logKey, slotInfokey, function (err, obj, vid) {
         if (err) {
             console.log(err);
             callback(err, false);
@@ -277,16 +306,19 @@ var UpdateSlotStateReserved = function (company, tenant, slotclass, type, catego
             tempObj.LastReservedTime = date.toISOString();
             var slotInfoTags = ["company_" + tempObj.Company, "tenant_" + tempObj.Tenant, "class_" + tempObj.Class, "type_" + tempObj.Type, "category_" + tempObj.Category, "state_" + tempObj.State, "resourceid_" + tempObj.ResourceId, "objtype_CSlotInfo", "slotid_" + tempObj.SlotId, "handlingrequest_" + tempObj.HandlingRequest];
             var jsonObj = JSON.stringify(tempObj);
-            redisHandler.SetObj_V_T(slotInfokey, jsonObj, slotInfoTags, vid, function (err, reply, vid) {
+            redisHandler.SetObj_V_T(logKey, slotInfokey, jsonObj, slotInfoTags, vid, function (err, reply, vid) {
+                infoLogger.DetailLogger.log('info', '%s Finished UpdateSlotStateReserved. Result: %s', logKey, reply);
                 callback(err, reply);
             });
         }
     });
 };
 
-var UpdateSlotStateConnected = function (company, tenant, slotclass, type, category, resourceid, slotid, sessionid, callback) {
+var UpdateSlotStateConnected = function (logKey, company, tenant, slotclass, type, category, resourceid, slotid, sessionid, callback) {
+    infoLogger.DetailLogger.log('info', '%s ************************* Start UpdateSlotStateConnected *************************', logKey);
+
     var slotInfokey = util.format('CSlotInfo:%s:%s:%s:%s:%s:%s:%s', company, tenant, resourceid, slotclass, type, category, slotid);
-    redisHandler.GetObj_V(slotInfokey, function (err, obj, vid) {
+    redisHandler.GetObj_V(logKey, slotInfokey, function (err, obj, vid) {
         if (err) {
             console.log(err);
             callback(err, false);
@@ -297,40 +329,49 @@ var UpdateSlotStateConnected = function (company, tenant, slotclass, type, categ
             tempObj.HandlingRequest = sessionid;
             var slotInfoTags = ["company_" + tempObj.Company, "tenant_" + tempObj.Tenant, "class_" + tempObj.Class, "type_" + tempObj.Type, "category_" + tempObj.Category, "state_" + tempObj.State, "resourceid_" + tempObj.ResourceId, "objtype_CSlotInfo", "slotid_" + tempObj.SlotId, "handlingrequest_" + tempObj.HandlingRequest];
             var jsonObj = JSON.stringify(tempObj);
-            redisHandler.SetObj_V_T(slotInfokey, jsonObj, slotInfoTags, vid, function (err, reply, vid) {
+            redisHandler.SetObj_V_T(logKey, slotInfokey, jsonObj, slotInfoTags, vid, function (err, reply, vid) {
                 if (!err) {
-                    UpdateLastConnectedTime(tempObj.Company, tempObj.Tenant, tempObj.Class, tempObj.Type, tempObj.Category, resourceid, function () { });
+                    UpdateLastConnectedTime(logKey, tempObj.Company, tempObj.Tenant, tempObj.Class, tempObj.Type, tempObj.Category, resourceid, function () { });
                 }
+                infoLogger.DetailLogger.log('info', '%s Finished UpdateSlotStateConnected. Result: %s', logKey, reply);
                 callback(err, reply);
             });
         }
     });
 };
 
-var SearchCSlotByTags = function (tags, callback) {
+var SearchCSlotByTags = function (logKey, tags, callback) {
+    infoLogger.DetailLogger.log('info', '%s ************************* Start SearchCSlotByTags *************************', logKey);
+
     if (Array.isArray(tags)) {
         tags.push("objtype_CSlotInfo");
-        redisHandler.SearchObj_V_T(tags, function (err, result) {
+        redisHandler.SearchObj_V_T(logKey, tags, function (err, result) {
+            infoLogger.DetailLogger.log('info', '%s Finished SearchCSlotByTags. Result: %s', logKey, result);
             callback(err, result);
         });
     }
     else {
         var e = new Error();
         e.message = "tags must be a string array";
+        infoLogger.DetailLogger.log('info', '%s Finished SearchCSlotByTags. Result: %s', logKey, "tags must be a string array");
         callback(e, null);
     }
 };
 
-var SearchConcurrencyInfoByTags = function (tags, callback) {
+var SearchConcurrencyInfoByTags = function (logKey, tags, callback) {
+    infoLogger.DetailLogger.log('info', '%s ************************* Start SearchConcurrencyInfoByTags *************************', logKey);
+
     if (Array.isArray(tags)) {
         tags.push("objtype_ConcurrencyInfo");
         redisHandler.SearchObj_V_T(tags, function (err, result) {
+            infoLogger.DetailLogger.log('info', '%s Finished SearchConcurrencyInfoByTags. Result: %s', logKey, result);
             callback(err, result);
         });
     }
     else {
         var e = new Error();
         e.message = "tags must be a string array";
+        infoLogger.DetailLogger.log('info', '%s Finished SearchConcurrencyInfoByTags. Result: %s', logKey, "tags must be a string array");
         callback(e, null);
     }
 };

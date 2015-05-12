@@ -1,43 +1,30 @@
-﻿var restify = require('restify');
-var redisHandler = require('./RedisHandler.js');
+﻿var redisHandler = require('./RedisHandler.js');
 var util = require('util');
+var infoLogger = require('./InformationLogger.js');
 
-var server = restify.createServer({
-    name: 'ArdsResourceStateMatcher',
-    version: '1.0.0'
-});
-server.use(restify.acceptParser(server.acceptable));
-server.use(restify.queryParser());
-server.use(restify.bodyParser());
-
-server.post('/resourcestate/push', function (req, res, next) {
-    processState(req.body, function (err, result) {
+var SetResourceState = function (logKey, company, tenant, resourceId, state, callback) {
+    infoLogger.DetailLogger.log('info', '%s ************************* Start SetResourceState *************************', logKey);
+    
+    processState(state, function (err, result) {
         if (err != null) {
-            res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-            res.end(err);
+            console.log(err);
         }
         else {
-            var StateKey = util.format('ResourceState:%d:%d:%s', req.body.Company, req.body.Tenant, req.body.ResourceId);
-            redisHandler.SetObj(StateKey, result, function (err, result) {
+            var StateKey = util.format('ResourceState:%d:%d:%s', company, tenant, resourceId);
+            redisHandler.SetObj(logKey, StateKey, result, function (err, result) {
                 if (err != null) {
-                    res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-                    res.end(err);
+                    console.log(err);
                 }
                 else {
-                    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-                    res.end();
+                    callback(err, result);
                 }
             });
         }
     });
-    return next();
-});
+};
 
-var processState = function (data, callback) {
+var processState = function (state, callback) {
     callback(null, data.State);
 };
 
-
-server.listen(2227, function () {
-    console.log('%s listening at %s', server.name, server.url);
-});
+module.exports.SetResourceState = SetResourceState;
