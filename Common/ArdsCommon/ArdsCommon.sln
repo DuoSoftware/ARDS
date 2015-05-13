@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "ArdsCommon", "ArdsCommon\ArdsCommon.njsproj", "{504ACC12-1B13-4C25-ACFC-A6FB2B66A981}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{504ACC12-1B13-4C25-ACFC-A6FB2B66A981}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{504ACC12-1B13-4C25-ACFC-A6FB2B66A981}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{504ACC12-1B13-4C25-ACFC-A6FB2B66A981}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{504ACC12-1B13-4C25-ACFC-A6FB2B66A981}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

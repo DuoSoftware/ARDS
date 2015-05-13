@@ -1,0 +1,17 @@
+{
+  "name": "ArdsCommon",
+  "version": "1.0.0",
+  "description": "",
+  "main": "InformationLogger.js",
+  "dependencies": {
+    "redis": "^0.12.1",
+    "winston": "^1.0.0",
+    "redis-lock": "^0.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
