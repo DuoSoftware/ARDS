@@ -4,7 +4,6 @@
   "description": "",
   "main": "ContinueArdsProcess.js",
   "dependencies": {
-	"ArdsCommon": "DuoSoftware/ARDS/Common/ArdsCommon",
     "node-uuid": "^1.4.3",
     "request": "^2.55.0",
     "restify": "^3.0.2"

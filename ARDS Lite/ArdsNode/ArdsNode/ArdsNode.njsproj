@@ -30,24 +30,11 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="Config.json" />
-    <Content Include="package.json" />
     <Content Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ContinueArdsProcess.js" />
-    <Compile Include="InformationLogger.js" />
-    <Compile Include="PreProcessor.js" />
-    <Compile Include="RedisHandler.js" />
-    <Compile Include="ReqMetaDataHandler.js" />
-    <Compile Include="ReqQueueHandler.js" />
-    <Compile Include="ReqServerHandler.js" />
-    <Compile Include="RequestHandler.js" />
     <Compile Include="RequestServerNode.js" />
-    <Compile Include="ResourceHandler.js" />
-    <Compile Include="ResourceStateMapper.js" />
-    <Compile Include="RestClient.js" />
-    <Compile Include="SortArray.js" />
     <Compile Include="Test.js" />
   </ItemGroup>
   <ItemGroup>

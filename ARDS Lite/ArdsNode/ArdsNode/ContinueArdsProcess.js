@@ -1,10 +1,10 @@
-﻿var restClientHandler = require('./RestClient.js');
-var configHandler = require('./Config.json');
+﻿var restClientHandler = require('../../.././Common/ArdsCommon/ArdsCommon/RestClient.js');
+var configHandler = require('../../.././Common/ArdsCommon/ArdsCommon/Config.json');
 var util = require('util');
-var reqQueueHandler = require('./ReqQueueHandler.js');
-var requestHandler = require('./RequestHandler.js');
-var reqServerHandler = require('./ReqServerHandler.js');
-var infoLogger = require('./InformationLogger.js');
+var reqQueueHandler = require('../../.././Common/ArdsCommon/ArdsCommon/ReqQueueHandler.js');
+var requestHandler = require('../../.././Common/ArdsCommon/ArdsCommon/RequestHandler.js');
+var reqServerHandler = require('../../.././Common/ArdsCommon/ArdsCommon/ReqServerHandler.js');
+var infoLogger = require('../../.././Common/ArdsCommon/ArdsCommon/InformationLogger.js');
 var uuid = require('node-uuid');
 
 var ContinueArds = function (request, callback) {

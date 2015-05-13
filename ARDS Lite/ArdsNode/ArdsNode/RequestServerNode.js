@@ -1,16 +1,17 @@
 ﻿var restify = require('restify');
-var redisHandler = require('./RedisHandler.js');
+var redisHandler = require('../../.././Common/ArdsCommon/ArdsCommon/redisHandler.js');
 var util = require('util');
-var resourceHandler = require('./ResourceHandler.js');
-var requestHandler = require('./RequestHandler.js');
-var reqServerHandler = require('./ReqServerHandler.js');
-var reqMetaHandler = require('./ReqMetaDataHandler.js');
-var reqQueueHandler = require('./ReqQueueHandler.js');
+var resourceHandler = require('../../.././Common/ArdsCommon/ArdsCommon/ResourceHandler.js');
+var requestHandler = require('../../.././Common/ArdsCommon/ArdsCommon/RequestHandler.js');
+var reqServerHandler = require('../../.././Common/ArdsCommon/ArdsCommon/ReqServerHandler.js');
+var reqMetaHandler = require('../../.././Common/ArdsCommon/ArdsCommon/ReqMetaDataHandler.js');
+var reqQueueHandler = require('../../.././Common/ArdsCommon/ArdsCommon/ReqQueueHandler.js');
 var continueArdsHandler = require('./ContinueArdsProcess.js');
-var infoLogger = require('./InformationLogger.js');
-var resStateMapper = require('./ResourceStateMapper.js');
-var infoLogger = require('./InformationLogger.js');
+var infoLogger = require('../../.././Common/ArdsCommon/ArdsCommon/InformationLogger.js');
+var resStateMapper = require('../../.././Common/ArdsCommon/ArdsCommon/ResourceStateMapper.js');
+var infoLogger = require('../../.././Common/ArdsCommon/ArdsCommon/InformationLogger.js');
 var uuid = require('node-uuid');
+var startArds = require('./StartArds.js');
 
 var server = restify.createServer({
     name: 'ArdsServer',
@@ -480,7 +481,7 @@ server.post('/request/add', function (req, res, next) {
 
     infoLogger.ReqResLogger.log('info', '%s --------------------------------------------------', logkey); 
     infoLogger.ReqResLogger.log('info', '%s Start- request/add #', logkey, { request: req.body });
-    requestHandler.AddRequest(logkey, req.body, function (err, result, vid) {
+    startArds.AddRequest(logkey, req.body, function (err, result, vid) {
         if (err) {
             infoLogger.ReqResLogger.log('info', '%s End- request/add :: Result: %s #', logkey, 'false', { request: req.body });
             infoLogger.ReqResLogger.log('error', '%s End- request/add :: Error: %s #', logkey, err, { request: req.body });
