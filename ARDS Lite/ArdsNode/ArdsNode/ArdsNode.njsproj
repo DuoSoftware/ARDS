@@ -35,6 +35,7 @@
   <ItemGroup>
     <Compile Include="ContinueArdsProcess.js" />
     <Compile Include="RequestServerNode.js" />
+    <Compile Include="StartArds.js" />
     <Compile Include="Test.js" />
   </ItemGroup>
   <ItemGroup>

@@ -3,6 +3,9 @@ var config = require('./Config.json');
 
 var ReqResLogger = new (winston.Logger)({
     transports: [
+        //new (winston.transports.Console)({
+        //    colorize: true
+        //}),
         new (winston.transports.File)({
             filename: config.reqresLogger.filename,
             level: config.reqresLogger.level,

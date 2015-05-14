@@ -1,10 +1,16 @@
 {
   "name": "ArdsNode",
-  "version": "0.0.0",
-  "description": "ArdsNode",
-  "main": "server.js",
-  "author": {
-    "name": "Heshan.i",
-    "email": ""
-  }
+  "version": "1.0.0",
+  "description": "",
+  "main": "RequestServerNode.js",
+  "dependencies": {
+    "node-uuid": "^1.4.3",
+    "restify": "^2.8.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
 }

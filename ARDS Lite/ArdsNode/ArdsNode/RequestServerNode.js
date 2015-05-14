@@ -9,7 +9,6 @@ var reqQueueHandler = require('../../.././Common/ArdsCommon/ArdsCommon/ReqQueueH
 var continueArdsHandler = require('./ContinueArdsProcess.js');
 var infoLogger = require('../../.././Common/ArdsCommon/ArdsCommon/InformationLogger.js');
 var resStateMapper = require('../../.././Common/ArdsCommon/ArdsCommon/ResourceStateMapper.js');
-var infoLogger = require('../../.././Common/ArdsCommon/ArdsCommon/InformationLogger.js');
 var uuid = require('node-uuid');
 var startArds = require('./StartArds.js');
 
@@ -17,17 +16,9 @@ var server = restify.createServer({
     name: 'ArdsServer',
     version: '1.0.0'
 });
-//var internalserver = restify.createServer({
-//    name: 'internalserverArdsServer',
-//    version: '1.0.0'
-//});
 server.use(restify.acceptParser(server.acceptable));
 server.use(restify.queryParser());
 server.use(restify.bodyParser());
-
-//internalserver.use(restify.acceptParser(internalserver.acceptable));
-//internalserver.use(restify.queryParser());
-//internalserver.use(restify.bodyParser());
 
 
 server.post('/requestserver/add', function (req, res, next) {
@@ -792,6 +783,3 @@ server.post('/ards/continueprocess', function (req, res, next) {
 server.listen(2225, function () {
     console.log('%s listening at %s', server.name, server.url);
 });
-//internalserver.listen(2224, function () {
-//    console.log('%s listening at %s', internalserver.name, internalserver.url);
-//});
