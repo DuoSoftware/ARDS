@@ -1,0 +1,10 @@
+{
+  "name": "ArdsMonitoringAPI",
+  "version": "0.0.0",
+  "description": "ArdsMonitoringAPI",
+  "main": "app.js",
+  "author": {
+    "name": "Heshan.i",
+    "email": ""
+  }
+}
