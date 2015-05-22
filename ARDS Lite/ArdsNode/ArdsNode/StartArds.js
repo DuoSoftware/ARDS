@@ -1,11 +1,12 @@
 ﻿var util = require('util');
-var redisHandler = require('../../.././Common/ArdsCommon/ArdsCommon/RedisHandler.js');
-var sortArray = require('../../.././Common/ArdsCommon/ArdsCommon/SortArray.js');
-var reqQueueHandler = require('../../.././Common/ArdsCommon/ArdsCommon/ReqQueueHandler.js');
-var resourceHandler = require('../../.././Common/ArdsCommon/ArdsCommon/ResourceHandler.js');
-var preProcessHandler = require('../../.././Common/ArdsCommon/ArdsCommon/PreProcessor.js');
+var redisHandler = require('../../.././ArdsCommon/ArdsCommon/RedisHandler.js');
+var sortArray = require('../../.././ArdsCommon/ArdsCommon/SortArray.js');
+var reqQueueHandler = require('../../.././ArdsCommon/ArdsCommon/ReqQueueHandler.js');
+var resourceHandler = require('../../.././ArdsCommon/ArdsCommon/ResourceHandler.js');
+var preProcessHandler = require('../../.././ArdsCommon/ArdsCommon/PreProcessor.js');
 var contArdsHandler = require('./ContinueArdsProcess.js');
-var infoLogger = require('../../.././Common/ArdsCommon/ArdsCommon/InformationLogger.js');
+var infoLogger = require('../../.././ArdsCommon/ArdsCommon/InformationLogger.js');
+var requestHandler = require('../../.././ArdsCommon/ArdsCommon/RequestHandler.js');
 
 var AddRequest = function (logKey, reqPreObj, callback) {
     preProcessHandler.execute(logKey, reqPreObj, function (err, requestObj) {
@@ -37,7 +38,7 @@ var AddRequest = function (logKey, reqPreObj, callback) {
                     callback(err, null, 0);
                 }
                 else {
-                    SetRequestState(logKey, requestObj.Company, requestObj.Tenant, requestObj.SessionId, "N/A", function (err, result) {
+                    requestHandler.SetRequestState(logKey, requestObj.Company, requestObj.Tenant, requestObj.SessionId, "N/A", function (err, result) {
                         if (err) {
                             console.log(err);
                         }

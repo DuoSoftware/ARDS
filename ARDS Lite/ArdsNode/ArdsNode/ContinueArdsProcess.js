@@ -1,10 +1,10 @@
-﻿var restClientHandler = require('../../.././Common/ArdsCommon/ArdsCommon/RestClient.js');
-var configHandler = require('../../.././Common/ArdsCommon/ArdsCommon/Config.json');
+﻿var resourceHandler = require('../../.././ArdsCommon/ArdsCommon/ResourceHandler.js');
+var configHandler = require('../../.././ArdsCommon/ArdsCommon/Config.json');
 var util = require('util');
-var reqQueueHandler = require('../../.././Common/ArdsCommon/ArdsCommon/ReqQueueHandler.js');
-var requestHandler = require('../../.././Common/ArdsCommon/ArdsCommon/RequestHandler.js');
-var reqServerHandler = require('../../.././Common/ArdsCommon/ArdsCommon/ReqServerHandler.js');
-var infoLogger = require('../../.././Common/ArdsCommon/ArdsCommon/InformationLogger.js');
+var reqQueueHandler = require('../../.././ArdsCommon/ArdsCommon/ReqQueueHandler.js');
+var requestHandler = require('../../.././ArdsCommon/ArdsCommon/RequestHandler.js');
+var reqServerHandler = require('../../.././ArdsCommon/ArdsCommon/ReqServerHandler.js');
+var infoLogger = require('../../.././ArdsCommon/ArdsCommon/InformationLogger.js');
 var uuid = require('node-uuid');
 
 var ContinueArds = function (request, callback) {
@@ -23,8 +23,7 @@ var ContinueArds = function (request, callback) {
         });
     }
     else {
-        var params = util.format('/resourceselection/getresource/%d/%d/%s/%s/%s/%s/%s/%s', request.Company, request.Tenant, request.SessionId, request.Class, request.Type, request.Category, request.SelectionAlgo, request.HandlingAlgo);
-        restClientHandler.DoGet(configHandler.resourceSelectionUrl, params, function (err, res, obj) {            
+        resourceHandler.DoResourceSelection(request.Company, request.Tenant, request.SessionId, request.Class, request.Type, request.Category, request.SelectionAlgo, request.HandlingAlgo, function (err, res, obj) {
             DoReplyServing(logkey, request, JSON.stringify(obj), function (reply) {
                 callback(reply);
             });
