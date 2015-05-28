@@ -1,5 +1,5 @@
 ﻿var winston = require('winston');
-var config = require('./Config.json');
+//var config = require('./Config.json');
 
 var ReqResLogger = new (winston.Logger)({
     transports: [
@@ -7,35 +7,41 @@ var ReqResLogger = new (winston.Logger)({
         //    colorize: true
         //}),
         new (winston.transports.File)({
-            filename: config.reqresLogger.filename,
-            level: config.reqresLogger.level,
-            json: config.reqresLogger.json,
-            maxsize: config.reqresLogger.maxsize,
-            maxFiles: config.reqresLogger.maxFiles
+            filename: 'ReqResLogger.log',
+            level: 'debug',
+            json: false,
+            maxsize: 1024000,
+            maxFiles: 10
         })
     ]
 });
 
 var DetailLogger = new (winston.Logger)({
     transports: [
+        //new (winston.transports.Console)({
+        //    colorize: true
+        //}),
         new (winston.transports.File)({
-            filename: config.detailLogger.filename,
-            level: config.detailLogger.level,
-            json: config.detailLogger.json,
-            maxsize: config.detailLogger.maxsize,
-            maxFiles: config.detailLogger.maxFiles
+            filename: 'DetailLogger.log',
+            level: 'debug',
+            json: false,
+            maxsize: 1024000,
+            maxFiles: 10
         })
     ]
 });
 
 var ContArdsLogger = new (winston.Logger)({
     transports: [
+        //new (winston.transports.Console)({
+        //    colorize: true
+        //}),
         new (winston.transports.File)({
-            filename: config.contardsLogger.filename,
-            level: config.contardsLogger.level,
-            json: config.contardsLogger.json,
-            maxsize: config.contardsLogger.maxsize,
-            maxFiles: config.contardsLogger.maxFiles
+            filename: 'ContArdsLogger.log',
+            level: 'debug',
+            json: false,
+            maxsize: 1024000,
+            maxFiles: 10
         })
     ]
 });

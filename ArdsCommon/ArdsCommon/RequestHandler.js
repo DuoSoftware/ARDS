@@ -96,7 +96,7 @@ var RemoveRequest = function (logKey, company, tenant, sessionId, callback) {
             }
             
             if (requestObj.ReqHandlingAlgo === "QUEUE") {
-                reqQueueHandler.RemoveRequestFromQueue(logKey, requestObj.QueueId, requestObj.QueueId.SessionId, function (err, result) {
+                reqQueueHandler.RemoveRequestFromQueue(logKey, requestObj.QueueId, requestObj.SessionId, function (err, result) {
                     if (err) {
                         console.log(err);
                     }

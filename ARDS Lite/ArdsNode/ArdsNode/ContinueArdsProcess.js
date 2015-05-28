@@ -1,5 +1,4 @@
 ﻿var resourceHandler = require('../../.././ArdsCommon/ArdsCommon/ResourceHandler.js');
-var configHandler = require('../../.././ArdsCommon/ArdsCommon/Config.json');
 var util = require('util');
 var reqQueueHandler = require('../../.././ArdsCommon/ArdsCommon/ReqQueueHandler.js');
 var requestHandler = require('../../.././ArdsCommon/ArdsCommon/RequestHandler.js');

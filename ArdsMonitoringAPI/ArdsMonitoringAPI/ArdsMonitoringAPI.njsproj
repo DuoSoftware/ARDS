@@ -12,8 +12,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>c85c136c-e022-476d-a542-5783b5331b0a</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>
-    </StartupFile>
+    <StartupFile>ArdsMonitoringAPI.js</StartupFile>
     <StartWebBrowser>False</StartWebBrowser>
     <SearchPath>
     </SearchPath>
@@ -34,9 +33,14 @@
     <Content Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArdsMinitoringAPI.js" />
+    <Compile Include="ArdsMonitoringAPI.js" />
+    <Compile Include="config\custom-environment-variables.js" />
+    <Compile Include="config\default.js" />
     <Compile Include="RequestMonitor.js" />
     <Compile Include="ResourceMonitor.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="config\" />
   </ItemGroup>
   <!-- Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them. -->
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="False" />

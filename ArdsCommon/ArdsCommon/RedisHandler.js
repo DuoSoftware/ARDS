@@ -729,7 +729,7 @@ var RemoveItemFromList = function (logKey, key, obj, callback) {
             console.log(err);
             callback(err, null);
         } else {
-            infoLogger.DetailLogger.log('info', '%s RemoveItemFromList - key: %s :: Reply: %s', logKey, key, result);
+            infoLogger.DetailLogger.log('info', '%s RemoveItemFromList - key: %s :: Reply: %d', logKey, key, result);
             callback(null, result);
         }
     });

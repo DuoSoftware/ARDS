@@ -1,27 +1,38 @@
 ﻿var util = require('util');
-var redisHandler = require('../.././ArdsCommon/ArdsCommon/redisHandler.js');
-var requestHandler = require('../.././ArdsCommon/ArdsCommon/RequestHandler.js');
-var infoLogger = require('../.././ArdsCommon/ArdsCommon/InformationLogger.js');
+var EventEmiter = require('events').EventEmitter;
+var resourceHandler = require('../.././ArdsCommon/ArdsCommon/ResourceHandler.js');
 
-var SearchMatchingObjs = function (logKey, tags, callback) {
-    requestHandler.SearchRequestByTags(logKey, tags, function (err, result) {
-        var reqSearchResult = [];
+var SearchResourceByTags = function (logkey, searchTags, callback) {
+    resourceHandler.SearchResourcebyTags(logkey, searchTags, function (err, resourcelist) {
         if (err) {
-            callback(err, reqSearchResult);
+            console.log(err);
+            callback(err, []);
         }
         else {
-            for (var i in result) {
-                var val = result[i];
-
-                requestHandler.GetRequestState(logKey, val.Obj.Company, val.Obj.Tenant, val.Obj.SessionId, function (err, reqState) {
-                    if (err) {
-                    }
-                    else {
-                        var obj = { Request: JSON.parse(obj), State: JSON.parse(reqState), Vid: JSON.parse(vid) };
-                        reqSearchResult.push(obj);
-                    }
-                });
+            var returnlist = [];
+            if (requestlist.length > 0) {
+                callback(null, returnlist);
+            }
+            else {
+                callback(null, returnlist);
             }
         }
     });
 };
+
+var GetAllResources = function (logkey, company, tenant, callback) {
+    var searchTags = ["company_" + company, "tenant_" + tenant];
+    SearchResourceByTags(logkey, searchTags, function (err, returnlist) {
+        callback(err, returnlist);
+    });
+};
+
+var GetResourceFilterByClassTypeCategory = function (logkey, company, tenant, reqclass, reqtype, reqcategory, callback) {
+    var searchTags = ["company_" + company, "tenant_" + tenant, "class_" + reqclass, "type_" + reqtype, "category_" + reqcategory];
+    SearchResourceByTags(logkey, searchTags, function (err, returnlist) {
+        callback(err, returnlist);
+    });
+};
+
+module.exports.GetAllResources = GetAllResources;
+module.exports.GetResourceFilterByClassTypeCategory = GetResourceFilterByClassTypeCategory;
