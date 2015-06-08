@@ -30,6 +30,8 @@ func SelectResources(Company, Tenant int, SessionId, ReqClass, ReqType, ReqCateg
 	switch SelectionAlgo {
 	case "BASIC":
 		selectionResult = BasicSelectionAlgo(Company, Tenant, SessionId)
+	case "WEIGHTBASE":
+		selectionResult = WeightBaseSelectionAlgo(Company, Tenant, SessionId)
 	default:
 		selectionResult = make([]string, 0)
 	}

@@ -8,8 +8,6 @@ import (
 
 func BasicSelectionAlgo(Company, Tenant int, SessionId string) []string {
 
-	const longForm = "Jan 2, 2006 at 3:04pm (MST)"
-
 	fmt.Println(Company)
 	fmt.Println(Tenant)
 	fmt.Println(SessionId)
@@ -19,17 +17,21 @@ func BasicSelectionAlgo(Company, Tenant int, SessionId string) []string {
 
 }
 
-func GetConcurrencyInfo(_company, _tenant int, _resId, _class, _type, _category string) ConcurrencyInfo {
-	client, err := redis.Dial("tcp", redisIp)
-	errHndlr(err)
-	defer client.Close()
+func WeightBaseSelectionAlgo(Company, Tenant int, SessionId string) []string {
 
-	// select database
-	r := client.Cmd("select", redisDb)
-	errHndlr(r.Err)
+	fmt.Println(Company)
+	fmt.Println(Tenant)
+	fmt.Println(SessionId)
+
+	var result = WeightBaseSelection(Company, Tenant, SessionId)
+	return result
+
+}
+
+func GetConcurrencyInfo(_company, _tenant int, _resId, _class, _type, _category string) ConcurrencyInfo {
 	key := fmt.Sprintf("ConcurrencyInfo:%d:%d:%s:%s:%s:%s", _company, _tenant, _resId, _class, _type, _category)
 	fmt.Println(key)
-	strCiObj, _ := client.Cmd("get", key).Str()
+	strCiObj := RedisGet(key)
 	fmt.Println(strCiObj)
 
 	var ciObj ConcurrencyInfo

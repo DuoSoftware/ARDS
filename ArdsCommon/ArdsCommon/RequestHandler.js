@@ -129,7 +129,7 @@ var RejectRequest = function (logKey, company, tenant, sessionId, reason, callba
             var requestObj = JSON.parse(obj);
             var stags = ["company_"+company+"", "tenant_"+tenant+ "", "class_"+ requestObj.Class+ "", "type_"+ requestObj.Type+ "", "category_"+ requestObj.Category+ "", "objtype_CSlotInfo", "handlingrequest_"+sessionId+ ""];
             
-            redisHandler.SearchObj_T(stags, function (err, result) {
+            redisHandler.SearchObj_T(logKey, stags, function (err, result) {
                 if (err) {
                     console.log(err);
                 }

@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/fzzy/radix/redis"
 	"sort"
 	"strings"
 )
@@ -12,14 +11,7 @@ func BasicSelection(_company, _tenent int, _sessionId string) []string {
 	requestKey := fmt.Sprintf("Request:%d:%d:%s", _company, _tenent, _sessionId)
 	fmt.Println(requestKey)
 
-	client, err := redis.Dial("tcp", redisIp)
-	errHndlr(err)
-	defer client.Close()
-
-	// select database
-	r := client.Cmd("select", redisDb)
-	errHndlr(r.Err)
-	strResObj, _ := client.Cmd("get", requestKey).Str()
+	strResObj := RedisGet(requestKey)
 	fmt.Println(strResObj)
 
 	var reqObj RequestSelection
@@ -53,12 +45,12 @@ func BasicSelection(_company, _tenent int, _sessionId string) []string {
 
 		tags := fmt.Sprintf("tag:*%s*", strings.Join(tagArray, "*"))
 		fmt.Println(tags)
-		val, _ := client.Cmd("keys", tags).List()
+		val := RedisSearchKeys(tags)
 		lenth := len(val)
 		fmt.Println(lenth)
 
 		for _, match := range val {
-			strResKey, _ := client.Cmd("get", match).Str()
+			strResKey := RedisGet(match)
 			splitVals := strings.Split(strResKey, ":")
 			if len(splitVals) == 4 {
 				concInfo := GetConcurrencyInfo(reqObj.Company, reqObj.Tenant, splitVals[3], reqObj.Class, reqObj.Type, reqObj.Category)

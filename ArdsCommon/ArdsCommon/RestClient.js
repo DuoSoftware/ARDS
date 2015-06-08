@@ -44,7 +44,7 @@ var DoPostSync = function (url, postData) {
 var DoPostDirect = function (serviceurl, postData, callback) {
     request.post({ url: serviceurl, formData: postData }, function optionalCallback(err, httpResponse, body) {
         if (err) {
-            return console.error('upload failed:', err);
+            console.log('upload failed:', err);
         }
         console.log('Server returned: %j', body);
         callback(err, httpResponse, body);

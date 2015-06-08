@@ -1,5 +1,5 @@
 {
-    "RedisIp": "192.168.1.194:6379",
+    "RedisIp": "192.168.3.200:6379",
 	"RedisDb": 6,
 	"ResourceCSlotUrl":"http://localhost:2225/resource/cs/update",
 	"ArdsContinueUrl":"http://localhost:2225/ards/continueprocess"

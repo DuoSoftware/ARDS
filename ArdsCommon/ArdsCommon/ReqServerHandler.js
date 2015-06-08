@@ -96,22 +96,22 @@ var SendCallBack = function (logKey, serverurl, resultToSend, callback) {
     //var surl = util.format('%s//%s', url.parse(serverurl).protocol, url.parse(serverurl).host);
     restClientHandler.DoPostDirect(serverurl, resultToSend, function (err, res, result) {
         if (err) {
-            infoLogger.DetailLogger.log('error', '%s SendCallBack Server Url: %s :: ResultToSend: %s :: Error: %s', logKey, serverurl, resultToSend, err);
+            infoLogger.DetailLogger.log('error', '%s Finished SendCallBack. Error: %s', logKey, err);
             console.log(err);
             callback(false, "error");
         }
         else {
             if (res.statusCode == "503") {
-                infoLogger.DetailLogger.log('info', '%s Finished RemoveRequestServer. Result: %s', logKey, "readdRequired");
+                infoLogger.DetailLogger.log('info', '%s Finished SendCallBack. Result: %s', logKey, "readdRequired");
                 console.log(result);
                 callback(true, "readdRequired");
             }
             else if (res.statusCode == "200") {
-                infoLogger.DetailLogger.log('info', '%s Finished RemoveRequestServer. Result: %s', logKey, "setNext");
+                infoLogger.DetailLogger.log('info', '%s Finished SendCallBack. Result: %s', logKey, "setNext");
                 callback(true, "setNext");
             }
             else {
-                infoLogger.DetailLogger.log('info', '%s Finished RemoveRequestServer. Result: %s', logKey, "error");
+                infoLogger.DetailLogger.log('info', '%s Finished SendCallBack. Result: %s', logKey, "error");
                 callback(false, "error");
             }
         }

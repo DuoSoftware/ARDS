@@ -12,27 +12,19 @@ func SingleHandling(ReqClass, ReqType, ReqCategory, sessionId string, resourceId
 }
 
 func SelectHandlingResource(ReqClass, ReqType, ReqCategory, sessionId string, resourceIds []string) string {
-	client, err := redis.Dial("tcp", redisIp)
-	errHndlr(err)
-	defer client.Close()
-
-	// select database
-	r := client.Cmd("select", redisDb)
-	errHndlr(r.Err)
-
 	for _, key := range resourceIds {
 		fmt.Println(key)
-		strResObj, _ := client.Cmd("get", key).Str()
+		strResObj := RedisGet(key)
 		fmt.Println(strResObj)
 
 		var resObj Resource
 		json.Unmarshal([]byte(strResObj), &resObj)
 
 		conInfo := GetConcurrencyInfo(resObj.Company, resObj.Tenant, resObj.ResourceId, ReqClass, ReqType, ReqCategory)
-
 		metaData := GetReqMetaData(resObj.Company, resObj.Tenant, ReqClass, ReqType, ReqCategory)
+		resState := GetResourceState(resObj.Company, resObj.Tenant, resObj.ResourceId)
 
-		if conInfo.RejectCount < metaData.MaxRejectCount {
+		if resState == "Available" && conInfo.RejectCount < metaData.MaxRejectCount {
 			ClearSlotOnMaxRecerved(ReqClass, ReqType, ReqCategory, resObj, metaData)
 
 			var tagArray = make([]string, 8)
@@ -48,13 +40,13 @@ func SelectHandlingResource(ReqClass, ReqType, ReqCategory, sessionId string, re
 
 			tags := fmt.Sprintf("tag:*%s*", strings.Join(tagArray, "*"))
 			fmt.Println(tags)
-			availableSlots, _ := client.Cmd("keys", tags).List()
+			availableSlots := RedisSearchKeys(tags)
 
 			for _, tagKey := range availableSlots {
-				strslotKey, _ := client.Cmd("get", tagKey).Str()
+				strslotKey := RedisGet(tagKey)
 				fmt.Println(strslotKey)
 
-				strslotObj, _ := client.Cmd("get", strslotKey).Str()
+				strslotObj := RedisGet(strslotKey)
 				fmt.Println(strslotObj)
 
 				var slotObj CSlotInfo

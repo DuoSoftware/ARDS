@@ -30,8 +30,8 @@ var ContinueArds = function (request, callback) {
     }
 };
 
-var DoReplyServing = function (logKey, request, handlingResource, callback) {
-    infoLogger.ContArdsLogger.log('info', '%s ContinueArds. SessionId: %s :: SessionId: %s :: handlingResource: %s :: ServingAlgo: %s', logKey, request.SessionId, handlingResource, request.ServingAlgo);
+var DoReplyServing = function (logkey, request, handlingResource, callback) {
+    infoLogger.ContArdsLogger.log('info', '%s ContinueArds. SessionId: %s :: SessionId: %s :: handlingResource: %s :: ServingAlgo: %s', logkey, request.SessionId, handlingResource, request.ServingAlgo);
                 
     switch (request.ServingAlgo) {
         case "CALLBACK":
@@ -39,6 +39,9 @@ var DoReplyServing = function (logKey, request, handlingResource, callback) {
                 var result = util.format('SessionId:: %s ::: HandlingResource:: %s', request.SessionId, handlingResource);
                 console.log(result);
                 requestHandler.SetRequestState(logkey, request.Company, request.Tenant, request.SessionId, "TRYING", function (err, result) {
+                    if (err) {
+                        console.log(err);
+                    }
                 });
                 
                 if (request.ReqHandlingAlgo == "QUEUE") {
@@ -51,7 +54,7 @@ var DoReplyServing = function (logKey, request, handlingResource, callback) {
                 reqServerHandler.SendCallBack(logkey, request.RequestServerUrl, postDataString, function (result, msg) {
                     if (result) {
                         if (msg == "readdRequired") {
-                            requestHandler.RejectRequest(logkey, request.Company, request.Tenant, request.SessionId, "Send Callback failed.", function (err, result) {
+                            requestHandler.RejectRequest(logkey, request.Company, request.Tenant, request.SessionId, "Server Return 503.", function (err, result) {
                                 if (err) {
                                     console.log("Readd Request to queue failed. SessionId:: " + request.SessionId);
                                 }
@@ -68,6 +71,17 @@ var DoReplyServing = function (logKey, request, handlingResource, callback) {
                     }
                     else {
                         console.log("SendCallBack failed. SessionId:: " + request.SessionId);
+                        requestHandler.RejectRequest(logkey, request.Company, request.Tenant, request.SessionId, "Send Callback failed.", function (err, result) {
+                            if (err) {
+                                console.log("Readd Request to queue failed. SessionId:: " + request.SessionId);
+                            }
+                            else if ("true") {
+                                console.log("Readd Request to queue success. SessionId:: " + request.SessionId);
+                            }
+                            else {
+                                console.log("Readd Request to queue failed. SessionId:: " + request.SessionId);
+                            }
+                        });
                     }
                 });
             }

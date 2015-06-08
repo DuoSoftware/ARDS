@@ -271,7 +271,7 @@ var GetObjByTagKey_T = function (logKey, tagKeys) {
     var count = 0;
     for (var i in tagKeys) {
         var val = tagKeys[i];
-        console.log("    " + i + ": " + val);
+        //console.log("    " + i + ": " + val);
         client.get(val, function (err, key) {
             console.log("Key: " + key);
             

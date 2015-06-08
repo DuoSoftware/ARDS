@@ -65,13 +65,6 @@ func ReserveSlot(slotInfo CSlotInfo) bool {
 }
 
 func ClearSlotOnMaxRecerved(reqClass, reqType, reqCategory string, resObj Resource, metaData ReqMetaData) {
-	client, err := redis.Dial("tcp", redisIp)
-	errHndlr(err)
-	defer client.Close()
-
-	// select database
-	r := client.Cmd("select", redisDb)
-	errHndlr(r.Err)
 	var tagArray = make([]string, 8)
 
 	tagArray[0] = fmt.Sprintf("company_%d", resObj.Company)
@@ -85,13 +78,13 @@ func ClearSlotOnMaxRecerved(reqClass, reqType, reqCategory string, resObj Resour
 
 	tags := fmt.Sprintf("tag:*%s*", strings.Join(tagArray, "*"))
 	fmt.Println(tags)
-	reservedSlots, _ := client.Cmd("keys", tags).List()
+	reservedSlots := RedisSearchKeys(tags)
 
 	for _, tagKey := range reservedSlots {
-		strslotKey, _ := client.Cmd("get", tagKey).Str()
+		strslotKey := RedisGet(tagKey)
 		fmt.Println(strslotKey)
 
-		strslotObj, _ := client.Cmd("get", strslotKey).Str()
+		strslotObj := RedisGet(strslotKey)
 		fmt.Println(strslotObj)
 
 		var slotObj CSlotInfo
@@ -113,20 +106,22 @@ func ClearSlotOnMaxRecerved(reqClass, reqType, reqCategory string, resObj Resour
 }
 
 func GetReqMetaData(_company, _tenent int, _class, _type, _category string) ReqMetaData {
-	client, err := redis.Dial("tcp", redisIp)
-	errHndlr(err)
-	defer client.Close()
-
-	// select database
-	r := client.Cmd("select", redisDb)
-	errHndlr(r.Err)
 	key := fmt.Sprintf("ReqMETA:%d:%d:%s:%s:%s", _company, _tenent, _class, _type, _category)
 	fmt.Println(key)
-	strMetaObj, _ := client.Cmd("get", key).Str()
+	strMetaObj := RedisGet(key)
 	fmt.Println(strMetaObj)
 
 	var metaObj ReqMetaData
 	json.Unmarshal([]byte(strMetaObj), &metaObj)
 
 	return metaObj
+}
+
+func GetResourceState(_company, _tenant int, _resId string) string {
+	key := fmt.Sprintf("ResourceState:%d:%d:%s", _company, _tenant, _resId)
+	fmt.Println(key)
+	strResStateObj := RedisGet(key)
+	fmt.Println(strResStateObj)
+
+	return strResStateObj
 }
