@@ -36,6 +36,7 @@ type Request struct {
 	SelectionAlgo    string
 	RequestServerUrl string
 	HandlingResource string
+	OtherInfo        string
 }
 
 type RequestSelection struct {
@@ -99,4 +100,8 @@ type ConcurrencyInfo struct {
 type WeightBaseResourceInfo struct {
 	ResourceId string
 	Weight     float64
+}
+
+type MultiResCount struct {
+	ResourceCount int
 }

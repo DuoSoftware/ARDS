@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/fzzy/radix/redis"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -64,7 +63,7 @@ func ReserveSlot(slotInfo CSlotInfo) bool {
 	return false
 }
 
-func ClearSlotOnMaxRecerved(reqClass, reqType, reqCategory string, resObj Resource, metaData ReqMetaData) {
+func ClearSlotOnMaxRecerved(reqClass, reqType, reqCategory, sessionId string, resObj Resource, metaData ReqMetaData) {
 	var tagArray = make([]string, 8)
 
 	tagArray[0] = fmt.Sprintf("company_%d", resObj.Company)

@@ -81,10 +81,6 @@ func GetLongestWaitingItem(_request []Request) Request {
 }
 
 func ContinueArdsProcess(_request Request) bool {
-	var result = SelectResources(_request.Company, _request.Tenant, _request.SessionId, _request.Class, _request.Type, _request.Category, _request.SelectionAlgo, _request.HandlingAlgo)
-
-	_request.HandlingResource = result
-
 	req, _ := json.Marshal(_request)
 	if Post(ardsUrl, string(req[:])) {
 		fmt.Println("Continue Ards Process Success")
@@ -103,6 +99,14 @@ func GetRequestState(_company, _tenant int, _sessionId string) string {
 	return reqState
 }
 
+func ContinueProcessing(_request Request) bool {
+	fmt.Println("ReqOtherInfo:", _request.OtherInfo)
+	var result = SelectResources(_request.Company, _request.Tenant, _request.SessionId, _request.Class, _request.Type, _request.Category, _request.SelectionAlgo, _request.HandlingAlgo, _request.OtherInfo)
+	_request.HandlingResource = result
+
+	return ContinueArdsProcess(_request)
+}
+
 func ExecuteRequestHash(_processingHashKey string) {
 	processingItems := GetAllProcessingItems(_processingHashKey)
 	sort.Sort(timeSliceReq(processingItems))
@@ -110,7 +114,7 @@ func ExecuteRequestHash(_processingHashKey string) {
 		if longestWItem != (Request{}) {
 			//SetNextProcessingItem(_processingHashKey, longestWItem.QueueId)
 			if GetRequestState(longestWItem.Company, longestWItem.Tenant, longestWItem.SessionId) == "QUEUED" {
-				if ContinueArdsProcess(longestWItem) {
+				if ContinueProcessing(longestWItem) {
 					//SetNextProcessingItem(_processingHashKey, longestWItem.QueueId)
 					fmt.Println("Continue ARDS Process Success")
 				}

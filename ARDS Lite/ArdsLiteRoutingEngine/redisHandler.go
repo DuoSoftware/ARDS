@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/fzzy/radix/redis"
 	"os"
+	"time"
 )
 
 var redisIp string
@@ -40,7 +41,12 @@ func InitiateRedis() {
 
 // Redis String Methods
 func RedisGet(key string) string {
-	client, err := redis.Dial("tcp", redisIp)
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in RedisGet", r)
+		}
+	}()
+	client, err := redis.DialTimeout("tcp", redisIp, time.Duration(10)*time.Second)
 	errHndlr(err)
 	defer client.Close()
 
@@ -54,7 +60,12 @@ func RedisGet(key string) string {
 }
 
 func RedisSearchKeys(pattern string) []string {
-	client, err := redis.Dial("tcp", redisIp)
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in RedisSearchKeys", r)
+		}
+	}()
+	client, err := redis.DialTimeout("tcp", redisIp, time.Duration(10)*time.Second)
 	errHndlr(err)
 	defer client.Close()
 
@@ -69,7 +80,12 @@ func RedisSearchKeys(pattern string) []string {
 // Redis Hashes Methods
 
 func RedisHashGetAll(hkey string) map[string]string {
-	client, err := redis.Dial("tcp", redisIp)
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in RedisHashGetAll", r)
+		}
+	}()
+	client, err := redis.DialTimeout("tcp", redisIp, time.Duration(10)*time.Second)
 	errHndlr(err)
 	defer client.Close()
 
@@ -82,7 +98,12 @@ func RedisHashGetAll(hkey string) map[string]string {
 }
 
 func RedisHashSetField(hkey, field, value string) bool {
-	client, err := redis.Dial("tcp", redisIp)
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in RedisHashSetField", r)
+		}
+	}()
+	client, err := redis.DialTimeout("tcp", redisIp, time.Duration(10)*time.Second)
 	errHndlr(err)
 	defer client.Close()
 
@@ -95,7 +116,12 @@ func RedisHashSetField(hkey, field, value string) bool {
 }
 
 func RedisRemoveHashField(hkey, field string) bool {
-	client, err := redis.Dial("tcp", redisIp)
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in RedisRemoveHashField", r)
+		}
+	}()
+	client, err := redis.DialTimeout("tcp", redisIp, time.Duration(10)*time.Second)
 	errHndlr(err)
 	defer client.Close()
 
@@ -110,7 +136,12 @@ func RedisRemoveHashField(hkey, field string) bool {
 // Redis List Methods
 
 func RedisListLpop(lname string) string {
-	client, err := redis.Dial("tcp", redisIp)
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in RedisListLpop", r)
+		}
+	}()
+	client, err := redis.DialTimeout("tcp", redisIp, time.Duration(10)*time.Second)
 	errHndlr(err)
 	defer client.Close()
 
@@ -124,7 +155,12 @@ func RedisListLpop(lname string) string {
 }
 
 func RedisListLpush(lname, value string) bool {
-	client, err := redis.Dial("tcp", redisIp)
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in RedisListLpush", r)
+		}
+	}()
+	client, err := redis.DialTimeout("tcp", redisIp, time.Duration(10)*time.Second)
 	errHndlr(err)
 	defer client.Close()
 

@@ -6,11 +6,12 @@ import (
 	"strings"
 )
 
-func SingleHandling(ReqClass, ReqType, ReqCategory, sessionId string, resourceIds []string) string {
-	return SelectHandlingResource(ReqClass, ReqType, ReqCategory, sessionId, resourceIds)
+func MultipleHandling(ReqClass, ReqType, ReqCategory, sessionId string, resourceIds []string, nuOfResRequested int) string {
+	return SelectMultipleHandlingResource(ReqClass, ReqType, ReqCategory, sessionId, resourceIds, nuOfResRequested)
 }
 
-func SelectHandlingResource(ReqClass, ReqType, ReqCategory, sessionId string, resourceIds []string) string {
+func SelectMultipleHandlingResource(ReqClass, ReqType, ReqCategory, sessionId string, resourceIds []string, nuOfResRequested int) string {
+	selectedResList := make([]string, 0)
 	for _, key := range resourceIds {
 		fmt.Println(key)
 		strResObj := RedisGet(key)
@@ -57,7 +58,11 @@ func SelectHandlingResource(ReqClass, ReqType, ReqCategory, sessionId string, re
 
 				if ReserveSlot(slotObj) == true {
 					fmt.Println("Return resource Data:", resObj.OtherInfo)
-					return resObj.OtherInfo
+					selectedResList = AppendIfMissingString(selectedResList, resObj.OtherInfo)
+					if len(selectedResList) == nuOfResRequested {
+						selectedResListString, _ := json.Marshal(selectedResList)
+						return string(selectedResListString)
+					}
 				}
 			}
 		}
