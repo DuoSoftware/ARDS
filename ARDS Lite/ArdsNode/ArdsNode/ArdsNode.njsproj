@@ -12,7 +12,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>60f5428b-8e25-480a-8041-a4c3d647e53b</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>RequestServerNode.js</StartupFile>
+    <StartupFile>App.js</StartupFile>
     <StartWebBrowser>False</StartWebBrowser>
     <SearchPath>
     </SearchPath>
@@ -36,7 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ContinueArdsProcess.js" />
-    <Compile Include="RequestServerNode.js" />
+    <Compile Include="App.js" />
     <Compile Include="StartArds.js" />
     <Compile Include="Test.js" />
   </ItemGroup>

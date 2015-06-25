@@ -24,7 +24,7 @@ var SetResourceState = function (logKey, company, tenant, resourceId, state, cal
 };
 
 var processState = function (state, callback) {
-    callback(null, data.State);
+    callback(null, state);
 };
 
 module.exports.SetResourceState = SetResourceState;

@@ -5,10 +5,15 @@ var config = require('config');
 var infoLogger = require('./InformationLogger.js');
 
 client = redis.createClient(6379, config.Redis.redisip);
-client.select(config.Redis.redisdb, function () { /* ... */ });
+client.select(config.Redis.redisdb, redis.print);
+//client.select(config.Redis.redisdb, function () { /* ... */ });
 client.on("error", function (err) {
     infoLogger.DetailLogger.log('error', 'Redis connection error :: %s', err);
     console.log("Error " + err);
+});
+
+client.on("connect", function (err) {
+    client.select(config.Redis.redisdb, redis.print);
 });
 
 var lock = require("redis-lock")(client);

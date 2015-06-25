@@ -42,7 +42,16 @@ var DoPostSync = function (url, postData) {
 };
 
 var DoPostDirect = function (serviceurl, postData, callback) {
-    request.post({ url: serviceurl, formData: postData }, function optionalCallback(err, httpResponse, body) {
+    var jsonStr = JSON.stringify(postData);
+    var options = {
+        url: serviceurl,
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json'
+        },
+        body: jsonStr
+    };
+    request.post(options, function optionalCallback(err, httpResponse, body) {
         if (err) {
             console.log('upload failed:', err);
         }

@@ -22,7 +22,8 @@ var ContinueArds = function (request, callback) {
         });
     }
     else {
-        resourceHandler.DoResourceSelection(request.Company, request.Tenant, request.SessionId, request.Class, request.Type, request.Category, request.SelectionAlgo, request.HandlingAlgo, function (err, res, obj) {
+        var jsonOtherInfo = JSON.stringify(request.OtherInfo);
+        resourceHandler.DoResourceSelection(request.Company, request.Tenant, request.SessionId, request.Class, request.Type, request.Category, request.SelectionAlgo, request.HandlingAlgo, jsonOtherInfo, function (err, res, obj) {
             DoReplyServing(logkey, request, JSON.stringify(obj), function (reply) {
                 callback(reply);
             });
@@ -50,7 +51,19 @@ var DoReplyServing = function (logkey, request, handlingResource, callback) {
                 }
                 
                 var hrOtherData = JSON.parse(handlingResource);
-                var postDataString = { SessionID: request.SessionId, Extention: hrOtherData.Extention, DialHostName: hrOtherData.DialHostName };
+                var postDataString = { SessionID: request.SessionId, ResourceInfo: hrOtherData };
+                
+                
+                if (Array.isArray(hrOtherData)) {
+                    var resInfoData = [];
+                    for (var i in hrOtherData) {
+                        var resData = hrOtherData[i];
+                        var resDataObj = JSON.parse(resData);
+                        resInfoData.push(resDataObj);
+                    }
+                    postDataString = { SessionID: request.SessionId, ResourceInfo: resInfoData };
+                }
+
                 reqServerHandler.SendCallBack(logkey, request.RequestServerUrl, postDataString, function (result, msg) {
                     if (result) {
                         if (msg == "readdRequired") {
@@ -91,7 +104,21 @@ var DoReplyServing = function (logkey, request, handlingResource, callback) {
         default:
             var result = util.format('SessionId:: %s ::: HandlingResource:: %s', request.SessionId, handlingResource);
             console.log(result);
-            callback(handlingResource);
+
+            var hrOtherData = JSON.parse(handlingResource);
+            var postDataString = { SessionID: request.SessionId, ResourceInfo: hrOtherData };
+            
+            
+            if (Array.isArray(hrOtherData)) {
+                var resInfoData = [];
+                for (var i in hrOtherData) {
+                    var resData = hrOtherData[i];
+                    var resDataObj = JSON.parse(resData);
+                    resInfoData.push(resDataObj);
+                }
+                postDataString = { SessionID: request.SessionId, ResourceInfo: resInfoData };
+            }
+            callback(postDataString);
             break;
     }
 };
